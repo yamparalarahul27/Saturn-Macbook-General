@@ -265,7 +265,7 @@ h1 em {
   width: 100%;
   height: auto;
   max-height: 430px;
-  overflow: visible;
+  overflow: hidden;
 }
 .stage-footer {
   padding: 18px 24px 22px;
@@ -415,7 +415,7 @@ h1 em {
 }
 .parts-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 13px;
 }
 .part-card {
@@ -825,4 +825,25 @@ h1 em {
 
 body {
   min-width: 1100px;
+}
+
+.guide-parts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 28px;
+}
+.guide-parts .part-help {
+  display: block;
+  margin: 0;
+}
+.guide-parts .part-preview {
+  margin-bottom: 18px;
+}
+.guide-parts .panel-eyebrow {
+  display: block;
+  margin-bottom: 6px;
+}
+.stage-footer {
+  flex-wrap: wrap;
 }

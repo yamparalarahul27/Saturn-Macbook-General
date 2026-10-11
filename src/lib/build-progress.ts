@@ -2,7 +2,9 @@
 
 import { useMemo, useSyncExternalStore } from "react";
 
-const KEY = "paper-craft:vikramaditya:v1";
+import { ship, steps } from "@/lib/ship";
+
+const KEY = `paper-craft:vikramaditya:${ship.version}`;
 const CHANGE = "paper-craft:progress";
 const EMPTY = '{"step":0,"completed":[]}';
 let fallback = EMPTY;
@@ -19,7 +21,7 @@ function parse(value: string): Progress {
     const data = JSON.parse(value);
     return {
       step: Number.isInteger(data.step)
-        ? Math.max(0, Math.min(8, data.step))
+        ? Math.max(0, Math.min(steps.length - 1, data.step))
         : 0,
       completed: Array.isArray(data.completed)
         ? [
@@ -29,7 +31,7 @@ function parse(value: string): Progress {
                   typeof n === "number" &&
                   Number.isInteger(n) &&
                   n >= 0 &&
-                  n < 9,
+                  n < steps.length,
               ),
             ),
           ]

@@ -84,6 +84,7 @@ const sheetNames = [
   "Aft deck & joining strip",
   "Forward deck & ski jump",
   "Island & upper structures",
+  "Gallery, radar & aft tower",
 ];
 const pdf = `${kitUrl}/vikramaditya-a4.pdf`;
 
@@ -150,7 +151,7 @@ export default function Workbench() {
             <span>
               Aircraft carrier
               <br />
-              Paper edition 01
+              Paper edition {ship.version}
             </span>
           </div>
         </section>
@@ -201,7 +202,9 @@ export default function Workbench() {
                   <Icon name="print" size={17} />
                 )}{" "}
                 {label}
-                {id === "sheets" && <span className="count">5</span>}
+                {id === "sheets" && (
+                  <span className="count">{ship.sheets}</span>
+                )}
               </button>
             ))}
           </div>
@@ -254,7 +257,7 @@ export default function Workbench() {
                   {tab === "sheets"
                     ? `Sheet 0${sheet}`
                     : isGuide
-                      ? `Step 0${step + 1}`
+                      ? `Step ${String(step + 1).padStart(2, "0")}`
                       : "The finished build"}
                 </span>
                 <span className="stage-small">
@@ -281,22 +284,25 @@ export default function Workbench() {
                     view={view}
                     selected={activePart}
                     visible={isGuide ? current.visible : 10}
+                    details={isGuide ? current.details : undefined}
                   />
                 </div>
               )}
               <div className="stage-footer">
                 {tab === "sheets" ? (
                   <div className="sheet-pagination">
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <button
-                        key={n}
-                        aria-label={`Preview sheet ${n}`}
-                        aria-pressed={sheet === n}
-                        onClick={() => setSheet(n)}
-                      >
-                        {n}
-                      </button>
-                    ))}
+                    {Array.from({ length: ship.sheets }, (_, i) => i + 1).map(
+                      (n) => (
+                        <button
+                          key={n}
+                          aria-label={`Preview sheet ${n}`}
+                          aria-pressed={sheet === n}
+                          onClick={() => setSheet(n)}
+                        >
+                          {n}
+                        </button>
+                      ),
+                    )}
                   </div>
                 ) : (
                   <div className="view-switch" aria-label="Model view">
@@ -305,6 +311,7 @@ export default function Workbench() {
                         ["assembled", "Assembled"],
                         ["exploded", "Exploded"],
                         ["top", "Top view"],
+                        ["detail", "Close-up"],
                       ] as const
                     ).map(([id, label]) => (
                       <button
@@ -320,7 +327,9 @@ export default function Workbench() {
                 <span className="scale-label">
                   {tab === "sheets"
                     ? "Print the PDF at 100%"
-                    : "40.6 cm from stern to bow"}
+                    : view === "detail"
+                      ? "Island & radar detail"
+                      : "40.6 cm from stern to bow"}
                 </span>
               </div>
             </section>
@@ -337,16 +346,17 @@ export default function Workbench() {
                   </h2>
                   <p className="panel-description">
                     Build the signature ski jump, starboard island, and broad
-                    landing deck of India’s aircraft carrier.
+                    landing deck of India’s aircraft carrier, with a layered
+                    bridge and separate radar assembly.
                   </p>
                   <dl className="spec-list">
                     <div>
                       <dt>Print pack</dt>
-                      <dd>5 A4 sheets</dd>
+                      <dd>{ship.sheets} A4 sheets</dd>
                     </div>
                     <div>
                       <dt>Cut-out pieces</dt>
-                      <dd>10 pieces</dd>
+                      <dd>{ship.parts.length} pieces</dd>
                     </div>
                     <div>
                       <dt>Finished size</dt>
@@ -417,7 +427,7 @@ export default function Workbench() {
                   </div>
                   <a className="button primary" href={pdf} download>
                     <Icon name="download" size={18} />
-                    Download all 5 sheets
+                    Download all {ship.sheets} sheets
                   </a>
                   <a
                     className="button secondary"
@@ -433,7 +443,12 @@ export default function Workbench() {
                 <>
                   <div className="panel-eyebrow">
                     Step {step + 1} of {steps.length}
-                    {current.sheet > 0 && <span>Sheet {current.sheet}</span>}
+                    {current.sheets.length > 0 && (
+                      <span>
+                        Sheet{current.sheets.length > 1 ? "s" : ""}{" "}
+                        {current.sheets.join(" & ")}
+                      </span>
+                    )}
                   </div>
                   <h2>{current.title}</h2>
                   <p className="panel-description">{current.intro}</p>
@@ -484,39 +499,39 @@ export default function Workbench() {
             </aside>
           </div>
           {isGuide && current.part > 0 ? (
-            <section className="part-help">
-              <div className="part-preview">
-                <Image
-                  src={`${kitUrl}/part-${current.part}.svg`}
-                  width={500}
-                  height={250}
-                  unoptimized
-                  alt={`Flat printable pattern for ${ship.parts[current.part - 1].name}`}
-                />
-              </div>
-              <div>
-                <span className="panel-eyebrow">
-                  Find this piece on your sheet
-                </span>
-                <h3>
-                  {String(current.part).padStart(2, "0")} ·{" "}
-                  {ship.parts[current.part - 1].name}
-                </h3>
-                <p>
-                  The blue lines fold away from the printed side. Keep the pale
-                  tabs; their numbers tell you where they attach.
-                </p>
-                <button
-                  className="text-button"
-                  onClick={() => {
-                    setSheet(current.sheet);
-                    setTab("sheets");
-                  }}
-                >
-                  View sheet {current.sheet}
-                  <Icon name="arrow" size={15} />
-                </button>
-              </div>
+            <section className="guide-parts" aria-label="Pieces for this step">
+              {current.parts.map((id) => {
+                const part = ship.parts[id - 1];
+                return (
+                  <article className="part-help" key={id}>
+                    <div className="part-preview">
+                      <Image
+                        src={`${kitUrl}/part-${id}.svg`}
+                        width={500}
+                        height={250}
+                        unoptimized
+                        alt={`Flat printable pattern for ${part.name}`}
+                      />
+                    </div>
+                    <div>
+                      <span className="panel-eyebrow">
+                        Piece {String(id).padStart(2, "0")}
+                      </span>
+                      <h3>{part.name}</h3>
+                      <button
+                        className="text-button"
+                        onClick={() => {
+                          setSheet(part.sheet);
+                          setTab("sheets");
+                        }}
+                      >
+                        View sheet {part.sheet}
+                        <Icon name="arrow" size={15} />
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </section>
           ) : tab === "overview" ? (
             <section className="parts-section" aria-labelledby="parts-heading">
@@ -530,8 +545,10 @@ export default function Workbench() {
                   { id: 3, title: "Flight deck", sub: "Sheets 3 & 4" },
                   { id: 6, title: "Ski jump", sub: "Sheet 4" },
                   { id: 7, title: "The island", sub: "Sheet 5" },
-                  { id: 8, title: "Bridge", sub: "Sheet 5" },
-                  { id: 9, title: "Funnel & radar", sub: "Sheet 5" },
+                  { id: 8, title: "Bridge & gallery", sub: "Sheets 5 & 6" },
+                  { id: 9, title: "Funnel", sub: "Sheet 5" },
+                  { id: 10, title: "Foremast & radar", sub: "Sheets 5 & 6" },
+                  { id: 14, title: "Aft signal tower", sub: "Sheet 6" },
                 ].map((part) => (
                   <button
                     className="part-card"
@@ -546,6 +563,7 @@ export default function Workbench() {
                         src={`${kitUrl}/part-${part.id}.svg`}
                         width={200}
                         height={100}
+                        style={{ width: "auto", height: "auto" }}
                         alt=""
                         unoptimized
                       />
@@ -589,9 +607,9 @@ export default function Workbench() {
             are not included in this pack.
           </p>
           <p>
-            Version 0.1: printable dimensions and joins have been checked
-            digitally. A physical test build is still needed to confirm fit with
-            real paper and glue.
+            Version {ship.version}: printable dimensions and joins have been
+            checked digitally. A physical test build is still needed to confirm
+            fit with real paper and glue.
           </p>
           <p>
             Reference:{" "}

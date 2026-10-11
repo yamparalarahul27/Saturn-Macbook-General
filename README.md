@@ -1,6 +1,6 @@
 # Paper Craft
 
-A Next.js workbench for printing and assembling paper models. The first kit is a simplified **INS Vikramaditya** waterline carrier, approximately 1:700 scale: 40.6 cm long, 8.6 cm wide, ten cut-out pieces on five A4 landscape sheets.
+A Next.js workbench for printing and assembling paper models. The first kit is a simplified **INS Vikramaditya** waterline carrier, approximately 1:700 scale: 40.6 cm long, 8.6 cm wide, fourteen cut-out pieces on six A4 landscape sheets.
 
 ## Run
 
@@ -22,11 +22,13 @@ npm start
 
 ## Included
 
-- Assembled, exploded, and top views, with part highlighting.
-- Nine on-screen assembly steps, numbered to match the printable parts, with progress saved on the device.
-- Five sheet previews and an actual-size, vector PDF download.
+- Assembled, exploded, top, and island close-up views, with part highlighting.
+- Eleven on-screen assembly steps, numbered to match the printable parts, with progress saved on the device.
+- Six sheet previews and an actual-size, vector PDF download.
 - Matching hull/deck seams, glue tabs, fold lines, mounting guides, and a 50 mm print calibration line.
 - Desktop-only workspace (1100 px minimum), keyboard-operable controls, and reduced-motion support.
+
+Version 0.2 adds a bridge gallery, a foremast platform with a folded radar screen, a separate aft signal tower, and shared printed surface detail. Assembly steps show every required piece and sheet. Progress is stored per kit version so an older step sequence cannot mark new work complete.
 
 Aircraft are planned for the same scale and **are not included** in this first pack. This is a simplified interpretation, not an engineering model or an official Indian Navy product. Digital geometry is validated; real-paper assembly has not yet been tested.
 
@@ -44,7 +46,7 @@ python3 -m venv .venv
 .venv/bin/python scripts/generate-kit.py
 ```
 
-This writes the PDF into `output/pdf/` and copies it, along with sheet and part SVG previews, into `public/kits/vikramaditya/`. The generator checks exact A4 media boxes, printable margins, face/tab overlap, separate-piece overlap, matching middle seams, overall scale, and ramp angle. It does not establish real-world assembly tolerances.
+This writes the PDF into `output/pdf/` and copies it, along with sheet and part SVG previews, into `public/kits/vikramaditya/`. The generator checks exact A4 media boxes, printable margins, face/tab overlap, separate-piece overlap, matching middle seams, overall scale, ramp angle, and contact between the added stacked structures. It does not establish real-world assembly tolerances.
 
 ## Main files
 
@@ -52,6 +54,7 @@ This writes the PDF into `output/pdf/` and copies it, along with sheet and part 
 - `src/lib/ship.ts` — assembly instructions and split-outline geometry.
 - `src/components/ship-model.tsx` — interactive SVG illustration.
 - `src/components/workbench.tsx` — model, guide, and print workspace.
+- `scripts/surface_art.py` — schematic deck and wall artwork; exported to `src/data/surface-art.json` for the browser.
 - `scripts/generate-kit.py` — dimensioned paper nets, PDF/SVG export, geometric assertions.
 - `docs/design.md` — design rationale, scope, and references.
 

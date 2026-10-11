@@ -4,7 +4,9 @@ import json, math, html, shutil
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import HexColor
 from reportlab.lib.units import mm
+from reportlab.pdfbase.pdfmetrics import stringWidth
 from pypdf import PdfReader
+from surface_art import artwork
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = json.loads((ROOT / 'src/data/vikramaditya.json').read_text())
@@ -12,6 +14,8 @@ OUT = ROOT / 'public/kits/vikramaditya'
 OUT.mkdir(parents=True, exist_ok=True)
 PDF = ROOT / 'output/pdf/vikramaditya-a4.pdf'
 PDF.parent.mkdir(parents=True, exist_ok=True)
+ART=artwork(DATA)
+(ROOT/'src/data/surface-art.json').write_text(json.dumps(ART, separators=(',', ':'))+'\n')
 W,H=297,210
 INK='#263243'; BLUE='#315eea'; PAPER='#e5eaf0'; TOP='#f0f3f7'; GLUE='#eeebf7'; MUTED='#66758a'
 
@@ -106,7 +110,7 @@ def clip(subject,clipper):
  return out
 
 def header(d,num,title):
- d.text(12,14,'Paper Craft',5,bold=True); d.text(285,13,f'INS Vikramaditya  /  Sheet {num} of 5',3,anchor='end')
+ d.text(12,14,'Paper Craft',5,bold=True); d.text(285,13,f'INS Vikramaditya  /  v{DATA["version"]}  /  Sheet {num} of {DATA["sheets"]}',3,anchor='end')
  d.line((12,19),(285,19),'#d5dbe3',.2); d.text(12,25,title,3.3,bold=True)
 
 def footer(d):
@@ -149,6 +153,8 @@ def hull(d,id):
   if dist(a,b)>15:
    n.tab(add(add(a,mul(v,h)),mul(u,4)),add(add(b,mul(v,h)),mul(u,-4)),v,'DECK')
  start=len(d.svg); n.draw(d)
+ for i,(a,b) in enumerate(edges(ring)):
+  u=mul(sub(b,a),1/dist(a,b));v=(u[1],-u[0]);draw_art(d,f'hull-{id}-{i}',add(a,mul(v,h)),u,mul(v,-1))
  d.text(140,88,f'{id:02} / {"FORWARD" if forward else "AFT"} HULL UNDERSIDE',3.4,bold=True,anchor='middle')
  d.text(140,94,'Printed side down. Fold walls up, rim tabs inward.',2.5,anchor='middle')
  d.text(140,99,'The straight middle end joins the other hull half.',2.5,anchor='middle')
@@ -156,6 +162,25 @@ def hull(d,id):
  seamx=43 if forward else 43+DATA['split']
  d.text(seamx+(-12 if forward else 12),91,'JOIN',2.3,BLUE,True,'middle',90)
  part_crop(d,n,start); return n
+
+def draw_art(d,name,origin=(0,0),u=(1,0),v=(0,1)):
+ def point(x,y):return add(origin,add(mul(u,x),mul(v,y)))
+ for a in ART[name]:
+  op=a['op'];x,y=a['x'],a['y'];stroke=a['stroke'];width=a['width']
+  if op=='line':d.line(point(x,y),point(a['x2'],a['y2']),stroke,width,a['dash'])
+  else:
+   if op=='rect':pts=[point(px,py) for px,py in rect(x,y,a['w'],a['h'])]
+   else:pts=[point(x+a['r']*math.cos(i*math.tau/24),y+a['r']*math.sin(i*math.tau/24)) for i in range(24)]
+   fill=a.get('fill','none');d.poly(pts,None if fill=='none' else fill,stroke,width)
+
+def clipped_art(d,name,ring,origin,clip_id):
+ d.c.saveState();path=d.c.beginPath();path.moveTo(ring[0][0]*mm,(H-ring[0][1])*mm)
+ for x,y in ring[1:]:path.lineTo(x*mm,(H-y)*mm)
+ path.close();d.c.clipPath(path,stroke=0,fill=0)
+ pts=' '.join(f'{x},{y}' for x,y in ring)
+ d.svg.append(f'<defs><clipPath id="{clip_id}"><polygon points="{pts}"/></clipPath></defs><g clip-path="url(#{clip_id})">')
+ draw_art(d,name,origin)
+ d.svg.append('</g>');d.c.restoreState()
 
 def deck(d,id):
  n=Net(id); forward=id==4; shift=DATA['split'] if forward else 0; ox,oy=23-shift,34; ring=[(x+ox,y+oy) for x,y in splitpoly(DATA['deck']['outline'],forward)]; n.face(ring,'#dce2e8'); start=len(d.svg); n.draw(d)
@@ -168,17 +193,9 @@ def deck(d,id):
   else:
    t0,t1=sorted(((xmin-a[0])/dx,(xmax-a[0])/dx));lo=max(lo,t0);hi=min(hi,t1)
   if hi>=lo: d.line(add(add(a,mul(sub(b,a),lo)),(ox,oy)),add(add(a,mul(sub(b,a),hi)),(ox,oy)),color,width,dash)
- # Angled landing area and take-off centreline, schematic placement based on reference photography.
- for yy in [30,57]: segment((3,yy),(245,yy+12),'#ffffff',.8)
- segment((3,43.5),(245,55.5),'#ffffff',.45,[5,3])
- segment((82,54),(335,36),'#b69b4b',.9,[3,2]); segment((335,36),(403,36),'#b69b4b',.9,[3,2])
- for xx in [48,64,80]: segment((xx,31+xx*.044),(xx,58+xx*.044),'#7c8895',.35)
- for xx in [15,100,150,280,310]:
-  segment((xx,13),(xx+18,13),'#a57865',.25); segment((xx,13),(xx,19),'#a57865',.25)
- for xx,yy in [(105,9),(156,7)]:
-  for a,b in edges(rect(xx,yy,17,15)):segment(a,b,'#a9b2bd',.3)
+ clipped_art(d,'deck',ring,(ox,oy),f'deck-{id}')
  # Visible placement guides are only at mounting surfaces.
- for id2 in [7,6]:
+ for id2 in [7,6,14]:
   p=DATA['parts'][id2-1]; poly=rect(p['x'],p['y'],p['w'],p['d'])
   for a,b in edges(poly):segment(a,b,'#7f8d9e',.16,[.5,1.1])
   tx=p['x']+p['w']/2
@@ -194,25 +211,30 @@ def box(d,p,x,y):
   pt=add(add(a,mul(u,3)),mul(v,deep/2)); n.labels.append((*pt,f'{id}{chr(65+(i-1)%4)}',1.65))
   n.tab(add(add(a,mul(v,deep)),mul(u,2)),add(add(b,mul(v,deep)),mul(u,-2)),v,str(id))
  start=len(d.svg); n.draw(d)
+ # Surface coordinates match the folded model, including the forward end.
+ draw_art(d,f'{id}-side',(x,y+h))
+ draw_art(d,f'{id}-side',(x,y),(1,0),(0,-1))
+ draw_art(d,f'{id}-end',(x+w,y+h),(0,-1),(1,0))
+ draw_art(d,f'{id}-end',(x,y),(0,1),(-1,0))
  if id==7:
-  # Bridge intentionally overhangs island by 2 mm on either side. Mark only its supported contact footprint.
-  placement(d,x+48,y,30,18,8);placement(d,x+17,y+2,20,14,9)
-  for xx in range(5,80,10):
-   for yy in [y-7,y+h+3]:d.poly(rect(x+xx,yy,5,3),'#6c7e90')
- elif id==8:
-  placement(d,x+8,y+6,10,10,10)
-  for xx in range(3,25,6):
-   for yy in [y-7,y+h+3]:d.poly(rect(x+xx,yy,4.5,3),'#596f85')
-  for yy in range(3,18,6):
-   for xx in [x-7,x+w+3]:d.poly(rect(xx,y+yy,3,4.5),'#596f85')
+  placement(d,x+46,y,34,18,11);placement(d,x+17,y+2,20,14,9)
+ elif id==8:placement(d,x+8,y+6,10,10,10)
  elif id==9:
   d.poly(rect(x+2,y+2,w-4,h-4),'#7a8591')
+  for xx in range(3,int(w)-2,2):d.line((x+xx,y+2),(x+xx,y+h-2),'#526574',.25)
   d.text(x+w/2,y+h+12,'R33',3,'#627181',True,'middle')
- elif id==10:
-  for yy in [y-20,y+h+5]:
-   d.poly(rect(x+1,yy,8,10),'#a8b8c9','#7f92aa',.2)
-   for j in range(1,5):d.line((x+1,yy+j*2),(x+9,yy+j*2),'#71849a',.16)
-   for j in range(1,4):d.line((x+1+j*2,yy),(x+1+j*2,yy+10),'#71849a',.16)
+ elif id==10:placement(d,x,y,w,h,12)
+ elif id==14:
+  d.poly(rect(x+2,y+2,w-4,h-4),'#acbac6','#8295a7',.2)
+ # Keep corner matching codes legible where surface artwork passes underneath.
+ for lx,ly,label,size in n.labels:
+  if not label[-1:].isalpha():continue
+  point=(lx,ly)
+  on_wall=any(color==PAPER and all((1 if area(face)>0 else -1)*cross(sub(b,a),sub(point,a))>=-1e-7 for a,b in edges(face)) for face,color in n.faces)
+  if on_wall:
+   tw=stringWidth(label,'Helvetica',size)
+   d.poly(rect(lx-tw/2-.25,ly-size,tw+.5,size+.3),PAPER)
+   d.text(lx,ly,label,size,BLUE,anchor='middle')
  part_crop(d,n,start);return n
 
 def strip(d):
@@ -228,17 +250,36 @@ def ramp(d):
  n.face(rect(x+L,y,rise,w),PAPER);n.fold((x+L,y),(x+L,y+w));n.tab((x+L+rise,y+3),(x+L+rise,y+w-3),(1,0),'6')
  start=len(d.svg);n.draw(d);d.line((x,y+w/2),(x+L,y+w/2),'#b69b4b',.9,[3,2]);part_crop(d,n,start);return n
 
-# Emit a 5-sheet carrier kit, with no unprintable oversized part.
+
+def plate(d,id,x,y):
+ p=DATA['parts'][id-1];n=Net(id);n.face(rect(x,y,p['w'],p['d']),TOP);start=len(d.svg);n.draw(d)
+ d.poly(rect(x+.6,y+.6,p['w']-1.2,p['d']-1.2),None,'#a1afbc',.2)
+ child=DATA['parts'][7 if id==11 else 12]
+ placement(d,x+child['x']-p['x'],y+child['y']-p['y'],child['w'],child['d'],child['id'])
+ d.text(x+1.4,y+2.7,str(id),1.8,MUTED)
+ part_crop(d,n,start);return n
+
+def screen(d,x,y):
+ p=DATA['parts'][12];n=Net(13);n.face(rect(x,y,p['w'],p['h']),PAPER)
+ n.face(rect(x,y+p['h'],p['w'],p['d']),GLUE);n.fold((x,y+p['h']),(x+p['w'],y+p['h']))
+ start=len(d.svg);n.draw(d);draw_art(d,'radar',(x,y));d.text(x+p['w']/2,y+p['h']+2.8,'13',1.8,BLUE,True,'middle')
+ part_crop(d,n,start);return n
+
+# Emit a six-sheet carrier kit. Page six adds four separate, buildable details.
 c=canvas.Canvas(str(PDF),pagesize=(W*mm,H*mm));c.setTitle('INS Vikramaditya - A4 paper model - approximately 1:700');c.setAuthor('Paper Craft')
 allnets=[]
 for num,title in [(1,'01  Aft hull'),(2,'02  Forward hull')]:
  d=Drawing(c);header(d,num,title);allnets.append(hull(d,num));notes(d,17,158,['Score blue dashed lines before cutting. Cut bold outer outlines only; keep all pale glue tabs.',f'Fold walls up with the printed base facing down. Glue matching {num}A, {num}B, etc. behind their marked edges.', 'Fold the DECK rim tabs inward. Glue the two straight JOIN end walls back-to-back; keep both bottoms level.', 'This is a simplified waterline model: the underwater hull, tiny fittings and weapons are omitted.']);footer(d);d.save(f'sheet-{num}.svg');c.showPage()
 d=Drawing(c);header(d,3,'03  Aft flight deck     /     05  Joining strip');allnets.append(deck(d,3));allnets.append(strip(d));notes(d,121,145,['Keep deck pieces 3 and 4 flat. Do not fold their seam.', 'Place strip 5 under the two straight middle edges,', 'with 10 mm glued beneath each half. Butt the edges', 'together; match both the runway lines and the outline.', 'Then glue the joined deck onto the hull rim tabs.', 'Use 160-200 gsm paper to keep the broad deck firm.']);footer(d);d.save('sheet-3.svg');c.showPage()
 d=Drawing(c);header(d,4,'04  Forward flight deck     /     06  Ski jump');allnets.append(deck(d,4));allnets.append(ramp(d));notes(d,124,143,['06 / Ski jump: fold both triangular sides downward.', 'Fold the tall end downward and all base tabs inward.', 'Glue its three base tabs to deck footprint 6.', 'The low edge faces the stern; the raised edge faces', 'the bow. The printed centreline follows the runway.', 'The ramp is a simple straight 14-degree wedge.']);footer(d);d.save('sheet-4.svg');c.showPage()
-d=Drawing(c);header(d,5,'07  Island     /     08  Bridge     /     09  Funnel     /     10  Radar mast')
+d=Drawing(c);header(d,5,'07  Island     /     08  Bridge     /     09  Funnel     /     10  Foremast')
 for id,x,y in [(7,39,54),(8,203,54),(9,50,139),(10,140,142)]:allnets.append(box(d,DATA['parts'][id-1],x,y))
-notes(d,191,129,['Fold walls down, away from print.', 'Glue matching lettered corner tabs.', 'Fold the four base tabs inward.', '', '7 fits the starboard deck guide.', '8 fits box 8 on the island roof;', 'it overhangs each side by 2 mm.', '9 fits roof box 9, aft of the bridge.', '10 fits box 10 on the bridge.', 'Use a thin layer of PVA glue.']);footer(d);d.save('sheet-5.svg');c.showPage();c.save()
-reader=PdfReader(PDF);assert len(reader.pages)==5
+notes(d,191,129,['Fold walls down, away from print.', 'Glue matching lettered corner tabs.', 'Fold the four base tabs inward.', '', '7 fits the starboard deck guide.', '11 goes on island roof guide 11.', '8 goes on gallery 11 (sheet 6).', '9 fits roof box 9, aft of the bridge.', '10 fits box 10 on the bridge.', 'Use a thin layer of PVA glue.']);footer(d);d.save('sheet-5.svg');c.showPage()
+d=Drawing(c);header(d,6,'11  Bridge gallery     /     12  Radar platform     /     13  Radar screen     /     14  Aft signal tower')
+allnets.append(plate(d,11,25,43));allnets.append(plate(d,12,90,43));allnets.append(screen(d,137,43));allnets.append(box(d,DATA['parts'][13],221,76))
+notes(d,18,130,['11 / Keep flat. Glue its underside to island guide 11, centred with an even 4 mm side overhang.', '     Guide 8 faces the bow. Glue bridge 8 on top; the gallery extends 2 mm beyond each bridge wall.', '12 / Keep flat. Centre on foremast 10: 4 mm overhang at each end, 3 mm on either side.', '13 / Fold the lavender foot away from the printed screen to make a right angle. Glue its printed face', '     to guide 13 on platform 12. The screen stands along the port edge; the foot points toward starboard.', '14 / Fold walls down, match lettered corners, then glue base tabs onto deck guide 14 aft of the island.', '', 'Fine grey marks are printed detail, not cuts. Only bold outside outlines are cut; blue dashes are folds.', 'Keep all parts from the same version. This paper prototype still needs a physical test assembly.'])
+footer(d);d.save('sheet-6.svg');c.showPage();c.save()
+reader=PdfReader(PDF);assert len(reader.pages)==DATA['sheets']
 for page in reader.pages:assert abs(float(page.mediabox.width)/mm-W)<.001 and abs(float(page.mediabox.height)/mm-H)<.001
 for i,a in enumerate(allnets):
  for b in allnets[i+1:]:
@@ -255,7 +296,22 @@ for kind in ['hull','deck']:
 assert abs(DATA['length']-284000/DATA['scale'])<.001
 assert abs(DATA['beam']-60000/DATA['scale'])<.001
 assert abs(math.degrees(math.atan(DATA['ramp']['h']/DATA['ramp']['w']))-14)<.01
+# Stacked parts must meet exactly; overhanging platforms must share their parent's centre.
+parts={p['id']:p for p in DATA['parts']}
+for child_id,parent_id in [(11,7),(8,11),(10,8),(12,10),(13,12)]:
+ child,parent=parts[child_id],parts[parent_id]
+ assert abs(child['z']-(parent['z']+parent['h']))<1e-6,('floating mounting surface',child_id)
+ if child_id in [11,12]:
+  assert abs(child['y']+child['d']/2-parent['y']-parent['d']/2)<1e-6
+ if child_id==12:
+  assert abs(child['x']+child['w']/2-parent['x']-parent['w']/2)<1e-6
+ if child_id in [8,10,13]:
+  assert child['x']>=parent['x'] and child['y']>=parent['y']
+  assert child['x']+child['w']<=parent['x']+parent['w'] and child['y']+child['d']<=parent['y']+parent['d']
+assert parts[14]['z']==DATA['hull']['height']
+assert parts[14]['x']+parts[14]['w']<parts[7]['x']
 shutil.copy2(PDF,OUT/'vikramaditya-a4.pdf')
-print('PASS: 5 exact A4 landscape sheets; 10 nets; no face/tab overlaps; printable margins; matching hull/deck joints; 1:700 overall dimensions; 14-degree ramp.')
+assert sorted(n.id for n in allnets)==[p['id'] for p in DATA['parts']]
+print('PASS: 6 exact A4 landscape sheets; 14 nets; no face/tab overlaps; printable margins; matching hull/deck joints; 1:700 overall dimensions; 14-degree ramp.')
 print('Prototype: real-paper assembly remains untested.')
 print(PDF)

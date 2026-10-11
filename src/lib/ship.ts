@@ -17,7 +17,7 @@ export function splitOutline(points: number[][], forward: boolean): Plane[] {
   });
   return result;
 }
-export const steps = [
+const coreSteps = [
   {
     title: "Prepare your workbench",
     short: "Print & prepare",
@@ -25,9 +25,9 @@ export const steps = [
     visible: 10,
     sheet: 0,
     intro:
-      "Five flat sheets. One small aircraft carrier. Start by checking your print size.",
+      "Six flat sheets. One small aircraft carrier. Start by checking your print size.",
     tasks: [
-      "Download the A4 PDF and print all five sheets in landscape, single-sided, at 100% / Actual size. Turn off Fit to page.",
+      "Download the A4 PDF and print all six sheets in landscape, single-sided, at 100% / Actual size. Turn off Fit to page.",
       "Measure the 50 mm line on the first sheet. Reprint if it is not exactly 50 mm.",
       "Use 160–200 gsm paper, scissors, a ruler, a blunt scoring tool, and a little PVA glue. Check your printer supports the paper weight.",
       "Score the blue dashed folds gently before cutting. Cut only the bold outer outlines and keep every pale glue tab.",
@@ -109,39 +109,72 @@ export const steps = [
       "Cut out part 7. Fold the four walls down from its roof, away from the printed face.",
       "Glue tabs 7A–7D behind their matching wall edges to form a hollow box.",
       "Fold all four base tabs inward. Spread glue on the printed underside of those folded tabs.",
-      "Set the island on deck guide 7. Roof guide 8 must be toward the bow; guide 9 must be toward the stern.",
+      "Set the island on deck guide 7. Roof guide 11 must be toward the bow; guide 9 must be toward the stern.",
     ],
     tip: "The island crosses the deck seam. Let the joined deck dry completely before attaching it.",
   },
   {
-    title: "Build the bridge",
-    short: "Bridge",
+    title: "Layer the gallery and bridge",
+    short: "Gallery & bridge",
     part: 8,
     visible: 8,
     sheet: 5,
     intro: "The windowed bridge sits at the forward end of the island.",
     tasks: [
-      "Cut and score part 8. Fold its walls down, and glue 8A–8D behind matching edges.",
-      "Fold the base tabs inward and apply a little glue to their printed undersides.",
-      "Centre the bridge over guide 8 on the island roof. It overhangs the island by 2 mm on each side.",
+      "Cut gallery 11 from sheet 6 and keep it flat. Centre it on island guide 11, with a 4 mm overhang on each side and guide 8 toward the bow.",
+      "Glue the gallery underside to the island roof. Cut and score bridge 8 from sheet 5; fold its walls down and glue matching corner tabs.",
+      "Fold the bridge base tabs inward and glue their printed faces onto guide 8 on the gallery. A 2 mm gallery rim stays visible around the bridge.",
       "Keep guide 10 visible on top; that is where the radar mast will sit.",
     ],
-    tip: "Leave the bridge overhang intact. Do not trim the walls to the narrower island underneath.",
+    tip: "Keep the gallery level as it dries. Its projecting edges are intentional; do not trim them to the island.",
   },
   {
-    title: "Fit the funnel and radar mast",
-    short: "Funnel & radar",
+    title: "Fit the funnel",
+    short: "Funnel",
     part: 9,
+    visible: 9,
+    sheet: 5,
+    intro:
+      "The funnel sits behind the bridge, with printed vents and an exhaust grille.",
+    tasks: [
+      "Cut and score funnel 9 from sheet 5. Keep all four corner tabs and all four base tabs.",
+      "Fold its walls down, then glue 9A–9D behind their matching edges. Fold the base tabs inward.",
+      "Place funnel 9 on island roof guide 9, with its dark opening on top.",
+      "Apply a little glue to the printed undersides of the base tabs and seat the funnel on the guide. Keep it upright while it sets.",
+    ],
+    tip: "The dark roof grille stays flat. Its fine lines are printed detail, not cuts.",
+  },
+
+  {
+    title: "Build the foremast and radar",
+    short: "Foremast & radar",
+    part: 10,
     visible: 10,
     sheet: 5,
-    intro: "Finish the carrier’s silhouette with the two small folded towers.",
+    intro:
+      "Three pieces give the forward mast a projecting platform and upright radar screen.",
     tasks: [
-      "Cut and score funnel 9 and radar mast 10. Fold their walls down and glue each set of matching lettered tabs.",
-      "Fold the base tabs inward; put glue on their printed undersides.",
-      "Place funnel 9 on island roof guide 9, with its dark opening on top.",
-      "Place mast 10 on bridge guide 10. Let the joins dry before moving the ship.",
+      "Cut and score foremast 10 from sheet 5. Fold its walls down, glue matching corners, then glue its inward base tabs onto bridge guide 10.",
+      "Cut platform 12 from sheet 6 and keep it flat. Centre it on the foremast roof: 4 mm overhang at each end, 3 mm on either side. Keep its longer edges running fore-and-aft.",
+      "Cut radar screen 13 as one piece. Fold the lavender foot away from the printed screen through 90°, making an L shape.",
+      "Glue the printed face of the foot onto guide 13. The upright screen stands on the port edge of that guide; its foot points toward starboard. Let it set upright.",
     ],
-    tip: "Tweezers help with the small tabs. Radar details are printed, so there are no fragile antenna pieces to cut.",
+    tip: "Do not cut the radar grid. A single upright panel is stronger than individual paper wires at this scale.",
+  },
+  {
+    title: "Add the aft signal tower",
+    short: "Aft tower",
+    part: 14,
+    visible: 10,
+    sheet: 6,
+    intro: "The separate small tower sits on the deck behind the main island.",
+    tasks: [
+      "Cut and score part 14 from sheet 6, retaining all of its corner and base tabs.",
+      "Fold the four walls down and glue tabs 14A–14D behind the matching edges. The printed grille and ladder stay on the outside.",
+      "Fold the base tabs inward. Apply a small amount of glue to their printed faces and set the tower on deck guide 14.",
+      "Keep the tower upright until the glue sets. It should sit aft of the island, clear of both printed deck lifts.",
+    ],
+    tip: "Hold the tower near its base with tweezers. Avoid pressing on the completed forward radar screen.",
   },
   {
     title: "Your carrier is ready",
@@ -156,6 +189,35 @@ export const steps = [
       "Allow the glue to dry fully. Lift the model from beneath the hull, rather than by its deck or radar mast.",
       "Keep the landing area clear. We’ll use the same approximately 1:700 scale for the aircraft added to this kit.",
     ],
-    tip: "This first edition is a simplified prototype. The digital nets are checked, but a physical test build is still needed.",
+    tip: "This detailed edition is a simplified prototype. The digital nets are checked, but a physical test build is still needed.",
   },
 ];
+
+const stepParts = [
+  [],
+  [1],
+  [1, 2],
+  [3, 4, 5],
+  [6],
+  [7],
+  [11, 8],
+  [9],
+  [10, 12, 13],
+  [14],
+  [],
+];
+export const steps = coreSteps.map((step, index) => ({
+  ...step,
+  parts: stepParts[index],
+  sheets: [
+    ...new Set(stepParts[index].map((id) => ship.parts[id - 1].sheet)),
+  ].sort(),
+  details:
+    index === 0 || index >= 9
+      ? [11, 12, 13, 14]
+      : index >= 8
+        ? [11, 12, 13]
+        : index >= 6
+          ? [11]
+          : [],
+}));
