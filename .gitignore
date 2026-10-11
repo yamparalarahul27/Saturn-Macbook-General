@@ -40,5 +40,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Local dev offers store
-.offers.json
+
+# Local artifact checks and Python environment
+/tmp/
+/output/playwright/
+/.playwright-cli/
+/.venv/
+__pycache__/
