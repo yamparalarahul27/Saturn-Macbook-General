@@ -120,14 +120,15 @@ function Aircraft({
       p.mesh.map((f) => ({
         ...f,
         id: p.id,
+        paintDepth: depth(f.detail ? p.mesh[0].points : f.points) + (f.detail ? 0.0001 : 0) + (exploded ? (/^[CAD]/.test(p.id) ? 6 : model.id === "hind" && p.id.startsWith("R") ? 7 : (model.parts.indexOf(p) % 3) * 1.6) * eye[2] : 0),
         points: f.points.map(([x, y, z]) => [
           x,
           y,
           z +
             (exploded
-              ? p.id.startsWith("C")
+              ? /^[CAD]/.test(p.id)
                 ? 6
-                : p.id === "H15"
+                : model.id === "hind" && p.id.startsWith("R")
                   ? 7
                   : (model.parts.indexOf(p) % 3) * 1.6
               : 0),
@@ -146,7 +147,7 @@ function Aircraft({
       ];
       return n.reduce((d, v, i) => d + v * eye[i], 0) > 0;
     })
-    .sort((a, b) => depth(a.points) - depth(b.points));
+    .sort((a, b) => a.paintDepth - b.paintDepth);
   return (
     <div className="air-orbit">
     <svg
@@ -184,7 +185,7 @@ function Aircraft({
           points={f.points.map((p) => project(p).join(",")).join(" ")}
           fill={highlight.includes(f.id) && !f.detail ? "#9ab6fb" : f.fill}
           stroke={highlight.includes(f.id) ? "#315eea" : "#84959c"}
-          strokeWidth={f.detail ? 0 : 0.3}
+          strokeWidth={f.detail ? 0 : 0.12}
           strokeLinejoin="round"
         />
       ))}
@@ -246,7 +247,7 @@ export default function AircraftWorkbench() {
           <div className="air-pack-note">
             6 fighters + 2 helicopters
             <br />
-            <span>4 A4 sheets · 160 cut pieces</span>
+            <span>4 A4 sheets · {models.reduce((sum, m) => sum + m.parts.length * m.count, 0)} cut pieces</span>
           </div>
         </section>
         <div className="air-selector" aria-label="Choose an aircraft">
@@ -394,10 +395,10 @@ export default function AircraftWorkbench() {
               {mode === "guide"
                 ? current.text
                 : mode === "print"
-                  ? "The PDF includes six 20-piece fighters and two 20-piece helicopters. Print only the page you need, or all four to make the full display pack."
+                  ? `The PDF includes six ${models[0].parts.length}-piece fighters and two ${models[1].parts.length}-piece helicopters. Print only the page you need, or all four to make the full display pack.`
                   : selected === 0
-                    ? "A tapered fuselage, rounded canopy, separate swept wings and stabilizers, canted fins and open engine pods. Twenty pieces replace the earlier flat-sided approximation."
-                    : "A stepped tandem cockpit flows into a fuller cabin, then a narrow rising tail boom. Drooping stub wings and a swept tail fin complete the revised 20-piece silhouette."}
+                    ? "Thirteen body sections shape the pointed nose and broad centre fuselage. A five-section canopy, six-section engine pods, swept wings and landing gear complete the 44-piece fighter."
+                    : "Two separate rounded canopy bubbles sit above a fourteen-section body. Twin engine housings, five individual rotor blades, drooping wings and landing gear make up the 53-piece helicopter."}
             </p>
             {mode === "guide" ? (
               <div className="air-step-actions">

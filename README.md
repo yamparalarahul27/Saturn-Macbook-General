@@ -74,12 +74,12 @@ Overall dimensions use the [Ministry of Defence commissioning report](https://ww
 
 The `/aircraft` shape-study edition replaces the previous flat-sided aircraft with faceted, tapered shells. A shared mesh generates the 3D views and the unfolded paper triangles, so the printable patterns match the preview geometry.
 
-- MiG-29K: 20 pieces each. Tapered nose/fuselage, open-bottom rounded canopy, two separate swept wings, separate stabilizers, canted fins and paired three-section engine pods.
-- Mi-24: 20 pieces each. Stepped cockpit, deep cabin, tapering/rising tail boom, twin rounded engine fairings, drooping stub wings, swept fin and fixed rotors.
-- Six fighters and two helicopters: 160 pieces on four A4 landscape sheets. Fighter pairs occupy pages 1–3; helicopters occupy page 4.
-- Perspective, top and side views; exploded presentation; seven fighter steps and eight helicopter steps.
+- MiG-29K: 44 pieces each. Thirteen fuselage skins, five canopy sections, twelve engine sections with rounded rectangular intakes and tapered exhausts, six wing/tail surfaces, and eight landing-gear pieces.
+- Mi-24: 53 pieces each. Fourteen body skins, eight separate double-bubble canopy skins, ten engine fairing skins, five wing/tail surfaces, eight rotor components and eight landing-gear pieces. Mi-24D-style external silhouette.
+- Six fighters and two helicopters: 370 pieces on four A4 landscape sheets. Fighter pairs occupy pages 1–3; helicopters occupy page 4.
+- Perspective, top and side views; exploded presentation; eight fighter steps and nine helicopter steps.
 - Print at 100% using 100–120 gsm paper. Grey dashed lines are gentle facet folds, blue dashed lines are glue-tab folds. Tabs are sub-millimetre: trial-build before making the fleet.
 
 Run `python3 scripts/generate-aircraft.py` with ReportLab and pypdf. The generator unfolds triangulated rings from `scripts/aircraft_geometry.py` and checks triangle edge lengths, fold connections, shell-face/tab intersections, matching section rings, page sizes and piece separation. Source data and printable files are generated; edit the geometry module to change shapes.
 
-References are documented in `docs/references/aircraft-research.md`. Public recognition drawings and photographs inform the silhouettes; cross-sections remain inferred. This is a faceted modelling prototype, not a dimension-certified replica. Physical assembly and paper-thickness tolerance are untested. Landing gear and small equipment are omitted. The Mi-24 is a custom display addition rather than a claimed Vikramaditya operating aircraft.
+References are documented in `docs/references/aircraft-research.md`. Public recognition drawings and photographs inform the silhouettes; cross-sections remain inferred. This is a faceted modelling prototype, not a dimension-certified replica. Physical assembly and paper-thickness tolerance are untested. Landing gear is represented by flat legs and wheel discs; small equipment is omitted. The Mi-24 is a custom display addition rather than a claimed Vikramaditya operating aircraft.

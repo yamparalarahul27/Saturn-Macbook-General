@@ -83,4 +83,4 @@ for model in models:
         for a,b in p['folds']:
             count=sum(1 for f in p['faces'] for u,v in zip(f['points'],f['points'][1:]+f['points'][:1]) if (a==u and b==v) or (a==v and b==u))
             assert count==2,(p['id'],'unmatched fold',count)
-print('PASS: 4 A4 sheets, 160 pieces; unfolded triangle lengths match mesh; fold hinges and page separation checked.')
+print(f'PASS: 4 A4 sheets, {sum(len(m["parts"])*m["count"] for m in models)} pieces; unfolded triangle lengths match mesh; fold hinges and page separation checked.')
