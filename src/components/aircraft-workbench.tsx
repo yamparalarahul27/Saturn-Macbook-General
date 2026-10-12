@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import models from "@/data/aircraft.json";
@@ -98,18 +98,19 @@ function Aircraft({
   visible?: string[];
   camera: "iso" | "top" | "side";
 }) {
-  const eye =
-    camera === "top"
-      ? [0, 0, 1]
-      : camera === "side"
-        ? [0, -1, 0]
-        : [40, -56, 31];
-  const project = ([x, y, z]: number[]) =>
-    camera === "top"
-      ? [300 + (x - 22) * 8, 165 + y * 8]
-      : camera === "side"
-        ? [300 + (x - 22) * 8, 230 - z * 14]
-        : [300 + (x - 22) * 7 + y * 5, 230 + (x - 22) * 2 - y * 3 - z * 8];
+  const [orbit, setOrbit] = useState({ yaw: 0, pitch: 0, zoom: 1 });
+  const drag = useRef<{ x: number; y: number } | null>(null);
+  const yaw = (camera === "iso" ? 0.62 : 0) + orbit.yaw;
+  const pitch = (camera === "top" ? Math.PI / 2 : camera === "side" ? 0 : 0.5) + orbit.pitch;
+  const right = [Math.cos(yaw), Math.sin(yaw), 0];
+  const up = [-Math.sin(yaw) * Math.sin(pitch), Math.cos(yaw) * Math.sin(pitch), Math.cos(pitch)];
+  const eye = [Math.sin(yaw) * Math.cos(pitch), -Math.cos(yaw) * Math.cos(pitch), Math.sin(pitch)];
+  const project = (point: number[]) => {
+    const p = [point[0] - 22, point[1], point[2] - 5];
+    return [300 + p.reduce((sum, v, i) => sum + v * right[i], 0) * 9 * orbit.zoom,
+      185 - p.reduce((sum, v, i) => sum + v * up[i], 0) * 9 * orbit.zoom];
+  };
+  const zoom = (delta: number) => setOrbit(o => ({ ...o, zoom: Math.max(0.5, Math.min(2.5, o.zoom + delta)) }));
   const depth = (pts: number[][]) =>
     pts.reduce((sum, p) => sum + p.reduce((d, v, i) => d + v * eye[i], 0), 0) /
     pts.length;
@@ -147,28 +148,36 @@ function Aircraft({
     })
     .sort((a, b) => depth(a.points) - depth(b.points));
   return (
+    <div className="air-orbit">
     <svg
       className="aircraft-drawing"
-      viewBox={
-        camera === "top"
-          ? "0 -30 600 390"
-          : camera === "side"
-            ? "70 30 460 270"
-            : "70 0 460 340"
-      }
+      viewBox="0 0 600 370"
+      tabIndex={0}
       role="img"
-      aria-label={`${model.name}, ${camera} view, ${exploded ? "exploded" : "assembled"}; faceted paper geometry`}
+      aria-label={`${model.name}, interactive 3D model. Drag to rotate; arrow keys rotate; plus and minus zoom; Home resets.`}
+      onPointerDown={e => {
+        if (e.button !== 0) return;
+        e.currentTarget.focus();
+        e.currentTarget.setPointerCapture(e.pointerId);
+        drag.current = { x: e.clientX, y: e.clientY };
+      }}
+      onPointerMove={e => {
+        if (!drag.current) return;
+        const dx = e.clientX - drag.current.x, dy = e.clientY - drag.current.y;
+        drag.current = { x: e.clientX, y: e.clientY };
+        setOrbit(o => ({ ...o, yaw: o.yaw + dx * 0.009, pitch: o.pitch + dy * 0.009 }));
+      }}
+      onPointerUp={e => { drag.current = null; e.currentTarget.releasePointerCapture(e.pointerId); }}
+      onPointerCancel={() => { drag.current = null; }}
+      onLostPointerCapture={() => { drag.current = null; }}
+      onKeyDown={e => {
+        if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "+", "=", "-", "Home"].includes(e.key)) return;
+        e.preventDefault();
+        if (e.key === "Home") setOrbit({ yaw: 0, pitch: 0, zoom: 1 });
+        else if (["+", "=", "-"].includes(e.key)) zoom(e.key === "-" ? -0.15 : 0.15);
+        else setOrbit(o => ({ ...o, yaw: o.yaw + (e.key === "ArrowLeft" ? -0.15 : e.key === "ArrowRight" ? 0.15 : 0), pitch: o.pitch + (e.key === "ArrowUp" ? -0.15 : e.key === "ArrowDown" ? 0.15 : 0) }));
+      }}
     >
-      {camera === "iso" && (
-        <ellipse
-          cx="300"
-          cy="290"
-          rx="175"
-          ry="24"
-          fill="#e4eaf0"
-          opacity=".6"
-        />
-      )}
       {faces.map((f, i) => (
         <polygon
           key={i}
@@ -180,6 +189,16 @@ function Aircraft({
         />
       ))}
     </svg>
+    <div className="air-orbit-tools">
+      <span>Drag to turn · arrow keys to rotate</span>
+      <div>
+        <button aria-label="Zoom out" disabled={orbit.zoom <= 0.5} onClick={() => zoom(-0.15)}>−</button>
+        <output aria-label="Model zoom">{Math.round(orbit.zoom * 100)}%</output>
+        <button aria-label="Zoom in" disabled={orbit.zoom >= 2.5} onClick={() => zoom(0.15)}>+</button>
+        <button onClick={() => setOrbit({ yaw: 0, pitch: 0, zoom: 1 })}>Reset view</button>
+      </div>
+    </div>
+    </div>
   );
 }
 
@@ -288,6 +307,7 @@ export default function AircraftWorkbench() {
               />
             ) : (
               <Aircraft
+                key={`${model.id}-${camera}`}
                 model={model}
                 camera={camera}
                 exploded={exploded}
