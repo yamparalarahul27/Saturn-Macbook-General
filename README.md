@@ -69,3 +69,16 @@ Physical source dimensions live in the JSON. `illustrationScale / scale` convert
 Isometric geometry helpers in `src/lib/anatomy/` come from [Anatomy](https://github.com/wheresryan22/anatomy), revision `dbf697a527bbf7d358668e1557cb1e35ff725d46`. Its license is preserved alongside the source. The skill is adapted to prioritize physically printable parts over decorative mechanical detail.
 
 Overall dimensions use the [Ministry of Defence commissioning report](https://www.pib.gov.in/newsite/PrintRelease.aspx?lang=3&reg=3&relid=100633). Deck layout was informed by [Ministry of Defence reference photography](https://commons.wikimedia.org/wiki/File:INS_Vikramaditya_with_full_air_asset_loadout.jpg); no photograph is embedded in the product.
+
+## Aircraft collection
+
+Open `/aircraft` from the carrier page. The first 1:400 pack adds six MiG-29K fighters and two Mil Mi-24 helicopters on two A4 landscape sheets (38 cut pieces total). The Mi-24 is explicitly a custom display choice, not a Vikramaditya air-group aircraft.
+
+- MiG-29K: 43.25 mm long, 29.975 mm wingspan; four pieces, five guide steps.
+- Mi-24: 43.75 mm fuselage, 43.25 mm swept rotor diameter; seven pieces, seven guide steps.
+- Includes assembled/exploded illustrations, numbered enlarged cutting patterns, page previews and a PDF download.
+- Print single-sided at 100% on 160–200 gsm card. Check the 50 mm calibration line. These open-bottom folded bodies omit landing gear; the fighter wings stay spread and helicopter rotors are fixed. Test-build one before making the whole pack.
+
+Regenerate with `python3 scripts/generate-aircraft.py` using ReportLab and pypdf. This writes `src/data/aircraft.json`, the public sheet SVGs and matching PDFs in `public/kits/aircraft` and `output/pdf`. The generator checks A4 page sizes, page margins, separated part bounds, fighter dimensions and the main rotor radius. The browser uses the generated mesh and pattern data; additional mounting lines are printed on the fighter sheet.
+
+These are original simplified craft patterns. Real-world dimensions anchor their overall size; local shapes, cross-sections, joints and heights are approximations, not blueprint reconstructions. Physical assembly and paper-thickness tolerances remain untested.

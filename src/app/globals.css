@@ -851,3 +851,37 @@ body {
 .sheet-pagination {
   flex-wrap: wrap;
 }
+
+/* Aircraft collection, alongside the original carrier workbench. */
+.air-collection { display:flex; justify-content:space-between; padding:28px 0; font-size:12px; color:#687a90; }
+.air-collection a, .air-sources a { color:#315eea; }
+.air-pack-note { text-align:right; line-height:1.8; color:#334155; font-size:15px; }
+.air-pack-note span { color:#687a90; font-size:12px; }
+.air-selector { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:28px 0; }
+.air-selector button { display:flex; flex-direction:column; align-items:flex-start; gap:10px; padding:22px 26px; border:1px solid #dfe6ee; border-radius:12px; background:#fff; text-align:left; cursor:pointer; }
+.air-selector button[aria-pressed="true"] { background:#f3f6ff; border-color:#315eea; }
+.air-selector strong { font-size:24px; font-weight:500; color:#263243; }
+.air-selector button > span:last-child { font-size:12px; color:#687a90; }
+.tabs button[aria-pressed="true"] { color:#315eea; border-bottom-color:#315eea; }
+.air-workspace { display:grid; grid-template-columns:minmax(0,1fr) 310px; gap:32px; margin-top:24px; }
+.air-stage { min-height:460px; display:flex; flex-direction:column; justify-content:space-between; background:#f3f6f9; border:1px solid #e1e7ee; border-radius:12px; overflow:hidden; }
+.aircraft-drawing { width:100%; height:370px; }
+.air-stage .stage-top { display:flex; justify-content:space-between; padding:24px; color:#687a90; font-size:11px; }
+.air-sheet { display:block; width:100%; height:auto; padding:18px; }
+.air-panel h2 { font-size:29px; font-weight:500; line-height:1.2; margin:14px 0 20px; }
+.air-panel > p { font-size:14px; line-height:1.85; color:#53677c; }
+.air-panel .button { width:100%; margin-top:12px; }
+.air-panel .air-note { font-size:11px; margin-top:22px; }
+.air-step-actions { display:flex; gap:12px; }
+.air-step-actions button { flex:1; }
+.air-step-actions button:disabled { opacity:.4; cursor:default; }
+.air-steps { display:flex; flex-wrap:wrap; gap:10px; margin:22px 0; }
+.air-steps button { border:1px solid #dfe6ee; background:white; padding:12px 16px; border-radius:6px; font-size:12px; cursor:pointer; }
+.air-steps button[aria-current="step"] { border-color:#315eea; color:#315eea; background:#f3f6ff; }
+.air-parts { margin-top:36px; }
+.air-parts-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-top:20px; }
+.air-parts-grid article { border:1px solid #dfe6ee; border-radius:10px; padding:18px; }
+.air-parts-grid svg { width:100%; height:125px; margin-bottom:12px; }
+.air-parts-grid strong { font-size:12px; font-weight:500; }
+.air-sources { margin:30px 0; padding:22px 0; border-top:1px solid #dfe6ee; font-size:12px; color:#687a90; line-height:1.8; }
+.air-sources summary { cursor:pointer; }

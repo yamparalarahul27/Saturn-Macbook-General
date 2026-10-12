@@ -113,7 +113,7 @@ export default function Workbench() {
           </span>
           Paper Craft<span className="brand-period">.</span>
         </Link>
-        <div className="header-note">A little paper. A whole new world.</div>
+        <Link className="header-note" href="/aircraft">Aircraft collection →</Link>
         <a className="header-download" href={pdf} download>
           <Icon name="download" size={17} />
           <span>Get the template</span>
@@ -591,7 +591,7 @@ export default function Workbench() {
               Placement guide
             </span>
           </div>
-          <p>Next on deck: aircraft, at the same scale.</p>
+          <Link href="/aircraft">Build the MiG-29K &amp; Mi-24 aircraft pack →</Link>
         </section>
         <details className="build-notes">
           <summary>About this paper edition</summary>
