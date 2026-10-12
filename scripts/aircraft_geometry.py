@@ -6,8 +6,8 @@ def dot(a,b):return sum(x*y for x,y in zip(a,b))
 def norm(a):return math.sqrt(dot(a,a))
 def cross(a,b):return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]
 def distance(a,b):return norm(sub(a,b))
-def face(p,c,detail=False,cull=False):return dict(points=p,fill=c,detail=detail,cull=cull)
-def makepart(id,name):return dict(id=id,name=name,faces=[],folds=[],art=[],mesh=[],checks=[])
+def face(p,c,detail=False,cull=False):return dict(points=p,fill=c,detail=detail,cull=cull,parent=-1)
+def makepart(id,name):return dict(id=id,name=name,faces=[],folds=[],art=[],mesh=[],checks=[],surfaces=[])
 def shade(c,t):
     return '#'+''.join(f'{max(0,min(255,round(int(c[i:i+2],16)*t))):02x}' for i in (1,3,5))
 def third(a,b,ra,rb,side):
@@ -48,6 +48,7 @@ def shell(id,name,s0,s1,color,cy=0,join=False,glass=False,upper=False):
         # Triangles wound outward, based on radial vector at this station.
         normal=cross(sub(mesh[1],mesh[0]),sub(mesh[2],mesh[0]));mid=[sum(k[i] for k in mesh)/3 for i in range(3)]
         if dot(normal,[0,mid[1]-cy,mid[2]-(s0[3]+s1[3])/2])<0:mesh=list(reversed(mesh))
+        p['surfaces'].append(dict(flat=flat,mesh=[v[i] for i in ids],uv=[[0,0],[1,0],[1,1]] if j%2==0 else [[0,0],[1,1],[0,1]],panel=panel,parent=len(p['mesh'])))
         p['faces'].append(face(flat,c));p['mesh'].append(face(mesh,c,cull=True))
         for k in range(3):
             assert abs(distance(flat[k],flat[(k+1)%3])-distance(v[ids[k]],v[ids[(k+1)%3]]))<1e-6
@@ -72,7 +73,7 @@ def strips(prefix,names,stations,color,cy=0,glass_indices=(),upper=False):
     return [shell(f'{prefix}{i+1:02}',names[i],stations[i],stations[i+1],color,cy,i>0,i in glass_indices,upper) for i in range(len(stations)-1)]
 def step(title,parts,text):return dict(title=title,ids=[p['id'] for p in parts],text=text)
 COMMON='Print at 100%, check the 50 mm ruler, and use 100–120 gsm paper. Score lightly before cutting. Grey diagonals are gentle facet folds; blue dashed lines are tab folds. These very small prototype shells need a trial build. '
-SHELL='Form each numbered skin around an twelve-sided cross-section. Close its long underside seam with the lilac tab. Then join in numerical order: tuck the next section’s small front tabs inside the previous section, matching all twelve panel edges. Keep the underside seams aligned. Do not flatten the body. '
+SHELL='Form each numbered skin around a twelve-sided cross-section. Close its long underside seam with the lilac tab. Then join in numerical order: tuck the next section’s small front tabs inside the previous section, matching all twelve panel edges. Keep the underside seams aligned. Do not flatten the body. '
 def chain(prefix, name, stations, color, cy=0, upper=False):
     return strips(prefix,[f'{name} {i+1}' for i in range(len(stations)-1)],stations,color,cy,range(len(stations)-1) if upper else (),upper)
 
@@ -85,6 +86,52 @@ def landing(prefix, positions):
         wheel=flatpart(f'{prefix}{i+1}W','Wheel disc',circle(x,z,radius),lambda x,z,y=y:[x,y-.03,z],'#303b40')
         art(wheel,circle(x,z,radius*.38),lambda x,z,y=y:[x,y-.035,z],'#9aabad')
         parts += [leg,wheel]
+    return parts
+
+def panel_art(p, panels, box, color):
+    """Clip UV decoration to each actual unfolded triangle; no invented decal geometry."""
+    x0,y0,x1,y1=box
+    for sf in p['surfaces']:
+        if sf['panel'] not in panels:continue
+        uv=clip([[x0,y0],[x1,y0],[x1,y1],[x0,y1]],sf['uv'])
+        if len(uv)<3 or abs(area(uv))<1e-9:continue
+        a,b,c=sf['uv'];den=side(a,b,c)
+        def weights(q):
+            w0=side(b,c,q)/den;w1=side(c,a,q)/den
+            return [w0,w1,1-w0-w1]
+        def mapped(key):return [[sum(w*v[i] for w,v in zip(weights(q),sf[key])) for i in range(len(sf[key][0]))] for q in uv]
+        p['art'].append(face(mapped('flat'),color))
+        pts=mapped('mesh');base=p['mesh'][sf['parent']]['points'];normal=cross(sub(base[1],base[0]),sub(base[2],base[0]));length=norm(normal)
+        if dot(cross(sub(pts[1],pts[0]),sub(pts[2],pts[0])),normal)<0:pts.reverse()
+        pts=[[v[i]+normal[i]/length*.002 for i in range(3)] for v in pts]
+        f=face(pts,color,True,True);f['parent']=sf['parent'];p['mesh'].append(f)
+
+def surface_details(parts, helicopter=False):
+    for p in parts:
+        prefix=p['id'][0]
+        canopy=prefix in ('A','D') if helicopter else prefix=='C'
+        if canopy:
+            for box in [(0,0,.055,1),(.945,0,1,1),(0,0,1,.07),(0,.93,1,1)]:
+                panel_art(p,range(3,9),box,'#b0bab0' if helicopter else '#9cabb4')
+        elif prefix==('B' if helicopter else 'F'):
+            panel_art(p,range(12),(.965,0,.985,1),'#647563' if helicopter else '#82969f')
+            # Belly service hatch: colour only, never a cutting hole.
+            if p['id'] in ('B07','B08','F08','F09'):
+                panel_art(p,[0,11],(.22,.18,.78,.82),'#6f7f68' if helicopter else '#95a5af')
+                panel_art(p,[0,11],(.27,.23,.73,.77),GREEN if helicopter else GREY)
+            if helicopter and p['id'] in ('B07','B08'):
+                for panel in [3,8]:
+                    panel_art(p,[panel],(.12,.1,.87,.9),'#bac3b4')
+                    panel_art(p,[panel],(.18,.17,.81,.83),GLASS)
+                # Lower door edge, separate from window frames.
+                for panel in [1,2,9,10]:
+                    for box in [(.1,.05,.13,.95),(.87,.05,.9,.95)]:panel_art(p,[panel],box,'#5c6c59')
+        elif prefix in (('E','J') if helicopter else ('L','R')):
+            if p['id'].endswith('03'):
+                for u in [.25,.36,.47,.58,.69]:panel_art(p,[3,4,7,8],(u,.2,u+.035,.8),'#485b56' if helicopter else '#667983')
+            if not helicopter and p['id'].endswith(('05','06')):
+                for panel in range(12):panel_art(p,[panel],(.07,.04,.93,.085),'#586972')
+        # UV correspondence is retained for validation, not shipped as duplicate client geometry.
     return parts
 
 def models():
@@ -127,7 +174,7 @@ def models():
         fins.append(p)
     canopy=chain('C','Canopy section',[(7.4,.45,.12,5.18),(8.5,.87,.7,5.32),(10.2,1.04,1.03,5.4),(12.1,1,.98,5.43),(13.8,.8,.65,5.4),(15.1,.3,.08,5.4)],GLASS,upper=True)
     gear=landing('G',[(9,-.33,3.2,.58),(9,.33,3.2,.58),(27,-3.7,2.6,.9),(27,3.7,2.6,.9)])
-    mp=fus+wings+engines+tails+fins+canopy+gear
+    mp=surface_details(fus+wings+engines+tails+fins+canopy+gear)
     mg=[step('Prepare the precision fighter',mp,COMMON+f'One fighter has {len(mp)} pieces. Keep the F, L, R and C shell families separate. Cut tiny gear pieces last.'),step('Form the ogival nose and body',fus,SHELL+'F01–F03 form the radome. Continue through F13. The nose closes with a tiny dot of glue. Align every seam underneath; do not flatten the broad centre body.'),step('Fit the swept wings',wings,'Glue W01/W02 to the body sides, with leading-edge root extensions beginning 10.5 mm behind the nose and roots ending at 33 mm. Match both sides in Top view. The thin dark line denotes the wing-fold boundary; leave the wings spread.'),step('Form intakes and exhausts',engines,SHELL+'Join L01–L06 and R01–R06 separately. The dark final two segments are the exhaust nozzles. Keep both ends open. Mount beneath the wing roots at ±3.05 mm from the centreline, intake at 15.5 mm and exhaust at 43.25 mm behind the nose.'),step('Install the tail surfaces',tails+fins,'Glue T01/T02 at the rear fuselage, level at 3.6 mm above the wheel contact plane. Mount V01/V02 atop the engine pods, with the swept leading edge forward and a slight outward lean. Match the Top and Side previews before glue sets.'),step('Assemble the five-section canopy',canopy,'C01–C05 are open-bottom half-shells, not closed tubes. Join their front tabs in order. Fold the two lower-edge tabs inward. Glue over the fuselage from 7.4 to 15.1 mm behind the nose. The crown rises smoothly near C02/C03 and tapers aft; do not squash it.'),step('Add the landing gear',gear,'Each G family has a leg (L) and wheel disc (W). Glue the matching disc to the lower leg, then bend the top tab and attach beneath the body. G1/G2 make the paired nose wheels at 9 mm; G3/G4 are the main wheels at 27 mm and ±3.7 mm from centre. Double the discs with scrap paper if needed. Keep all wheel bottoms on a flat surface while drying.'),step('Check the completed fighter',mp,'Compare nose, canopy, wing sweep, twin nozzles and tail symmetry in all views. Flat paper wheels and unlined openings are scale simplifications. This is a reference-informed prototype; test one complete model before repeating it.')]
     # A smooth lower cockpit tub supports TWO separate raised canopy bubbles.
     hs=[(0,.08,.12,2.8),(1.3,.65,.65,2.95),(3,1.15,.95,3.15),(5,1.5,1.1,3.3),(7,1.8,1.25,3.6),(9.5,2.05,1.7,4.1),(12,2.35,2.35,4.55),(15,2.45,2.45,4.6),(19,2.4,2.4,4.65),(22,1.95,1.95,4.85),(25,1.35,1.25,5.25),(29,.95,.9,5.55),(33,.65,.65,5.8),(37.8,.38,.45,6.05),(40,.22,.28,6.2)]
@@ -162,7 +209,7 @@ def models():
         a=i*2*math.pi/3;tr += [[r*math.cos(a+t),r*math.sin(a+t)] for r,t in [(1,-.35),(4.885,-.08),(4.885,.08),(1,.35)]]
     tailrotor=flatpart('R08','Tail rotor',tr,lambda x,y:[42.3+x,-.35,10.3+y],'#4d6065')
     gear=landing('G',[(5,-.35,2.35,.6),(5,.35,2.35,.6),(19,-2.6,3.2,.95),(19,2.6,3.2,.95)])
-    hp=hf+front+rear+pods+hw+tail+[fin,mast,hub]+blades+[tailrotor]+gear
+    hp=surface_details(hf+front+rear+pods+hw+tail+[fin,mast,hub]+blades+[tailrotor]+gear,True)
     hg=[step('Prepare the detailed Hind',hp,COMMON+f'One helicopter has {len(hp)} pieces. B is the body; A/D are the two canopies; E/J are engines; R is the rotor assembly.'),step('Build the rounded body and boom',hf,SHELL+'Join B01–B14 from nose to tail. The centre cabin is deepest, then narrows through several sections into the rising boom. Align all underside seams. The cockpit tub remains low to accept separate canopy bubbles.'),step('Build the two bubble canopies',front+rear,'A01–A04 form the forward canopy; D01–D04 form the raised rear canopy. These are open-bottom half-shells. Join each family in order and fold lower-edge tabs inward. Attach A from 0.7 to 6.2 mm behind the nose, and D from 5.8 to 10.8 mm. Keep the characteristic step between the two crowns; use small glue fillets at curved contact points.'),step('Add the twin engine housings',pods,SHELL+'Build E01–E05 and J01–J05 independently. Smaller intake ends face forward. Fit along the cabin roof from 8.2 to 21 mm behind the nose, centred ±1.15 mm. The rear tapers down toward the tail boom. Keep openings unfilled.'),step('Fit the drooping wings',hw,'Fold root tabs upward. Attach W01/W02 from 14.5 to 20 mm behind the nose. Set both tips about 1.2 mm below the roots (12 degrees downward). Check symmetry in the 3D view.'),step('Assemble the tail surfaces',tail+[fin,tailrotor],'Attach T01/T02 symmetrically to the boom at 34–36 mm. V01 sweeps upward and aft from the boom tip. Glue R08 to the left side near the fin tip. The tail rotor is fixed and remains clear of the tailplanes.'),step('Build the five-blade rotor',[mast,hub]+blades,'Roll R01 into a twelve-sided mast and glue its seam. Mount vertically between the engine fairings at 15 mm behind the nose. Glue hub R02 flat on top. Glue the inner 0.6–1.15 mm of each R03–R07 blade beneath the hub, spacing the five blades evenly at 72 degrees. Their tips reach 21.625 mm from the hub. Keep blades level while drying; use Top view as a placement reference.'),step('Fit the landing gear',gear,'G1/G2 are the paired nose wheels at 5 mm. G3/G4 are main wheels at 19 mm and ±2.6 mm. Glue each W disc to its L leg, bend the top tab and glue to the lower body. Reinforce flat discs with scrap paper if desired. Set on a flat surface so all wheels touch.'),step('Inspect the finished helicopter',hp,'Check two distinct canopy bubbles, a deep rounded cabin, paired engine housings, five separate rotor blades, drooping wings and rising tail. This represents a Mi-24D-style external silhouette. Equipment and cross-sections remain simplified and inferred; a physical trial build is still required.')]
     return [dict(id='mig',name='MiG-29K',label='Carrier fighter',size='43.25 mm long · 29.98 mm wingspan',count=6,parts=mp,steps=mg,sheets=[1,2,3]),dict(id='hind',name='Mil Mi-24',label='Custom display · Mi-24D-style',size='43.75 mm airframe · 43.25 mm rotor diameter',count=2,parts=hp,steps=hg,sheets=[4])]
 

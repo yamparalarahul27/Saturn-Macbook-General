@@ -77,7 +77,8 @@ The `/aircraft` shape-study edition replaces the previous flat-sided aircraft wi
 - MiG-29K: 44 pieces each. Thirteen fuselage skins, five canopy sections, twelve engine sections with rounded rectangular intakes and tapered exhausts, six wing/tail surfaces, and eight landing-gear pieces.
 - Mi-24: 53 pieces each. Fourteen body skins, eight separate double-bubble canopy skins, ten engine fairing skins, five wing/tail surfaces, eight rotor components and eight landing-gear pieces. Mi-24D-style external silhouette.
 - Six fighters and two helicopters: 370 pieces on four A4 landscape sheets. Fighter pairs occupy pages 1–3; helicopters occupy page 4.
-- Perspective, top and side views; exploded presentation; eight fighter steps and nine helicopter steps.
+- Drag-to-rotate perspective, top, side, rear and underside views; exploded presentation; eight fighter steps and nine helicopter steps. Search by part name/ID and locate each piece in the assembled model.
+- Canopy frames, cabin windows/door outlines, engine vents, exhaust segments and belly access panels are mapped to both the 3D surfaces and their unfolded print triangles. These are illustrative printed details, not extra cut lines.
 - Print at 100% using 100–120 gsm paper. Grey dashed lines are gentle facet folds, blue dashed lines are glue-tab folds. Tabs are sub-millimetre: trial-build before making the fleet.
 
 Run `python3 scripts/generate-aircraft.py` with ReportLab and pypdf. The generator unfolds triangulated rings from `scripts/aircraft_geometry.py` and checks triangle edge lengths, fold connections, shell-face/tab intersections, matching section rings, page sizes and piece separation. Source data and printable files are generated; edit the geometry module to change shapes.

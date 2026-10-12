@@ -24,3 +24,7 @@ Every shell uses triangulated twelve-sided rings. The generator unfolds each tri
 Digital validation covers A4 size, margins, hinge connectivity, triangle lengths and shell/tab overlap. It does not prove physical fit, shape accuracy against a dimensional survey, paper-thickness tolerance or practical assembly. At 1:400 many tabs are below 1 mm. Test one before assembling the complete six-fighter/two-helicopter display pack.
 
 Mi-24 is a user-selected custom display addition, not a claimed Vikramaditya air-group aircraft. The six/two pack quantity is a craft layout, not an operational loadout.
+
+## Surface coverage
+
+The surface-detail pass adds illustrative canopy frames, cabin window/door borders, nacelle vents, nozzle segments and belly access-panel outlines. These are not traced maintenance markings. Each rectangular detail is clipped in panel coordinates to the same triangles used by the print net and projected to the 3D surface. Rear/underside views and part search/highlighting make hidden areas and assembly locations inspectable.

@@ -12,6 +12,8 @@ PDF=ROOT/'output/pdf/aircraft-a4.pdf'
 BLUE='#315eea'
 models=build_models()
 validate(models)
+for model in models:
+    for part in model["parts"]:part.pop("surfaces",None)
 (ROOT/'src/data/aircraft.json').write_text(json.dumps(models,separators=(',',':'))+'\n')
 W,H=297,210
 c=canvas.Canvas(str(PDF),pagesize=(W*mm,H*mm),invariant=1)

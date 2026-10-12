@@ -96,12 +96,12 @@ function Aircraft({
   exploded: boolean;
   highlight: string[];
   visible?: string[];
-  camera: "iso" | "top" | "side";
+  camera: "iso" | "top" | "side" | "bottom" | "rear";
 }) {
   const [orbit, setOrbit] = useState({ yaw: 0, pitch: 0, zoom: 1 });
   const drag = useRef<{ x: number; y: number } | null>(null);
-  const yaw = (camera === "iso" ? 0.62 : 0) + orbit.yaw;
-  const pitch = (camera === "top" ? Math.PI / 2 : camera === "side" ? 0 : 0.5) + orbit.pitch;
+  const yaw = (camera === "iso" ? 0.62 : camera === "rear" ? Math.PI / 2 : 0) + orbit.yaw;
+  const pitch = (camera === "top" ? Math.PI / 2 : camera === "bottom" ? -Math.PI / 2 : camera === "side" || camera === "rear" ? 0 : 0.5) + orbit.pitch;
   const right = [Math.cos(yaw), Math.sin(yaw), 0];
   const up = [-Math.sin(yaw) * Math.sin(pitch), Math.cos(yaw) * Math.sin(pitch), Math.cos(pitch)];
   const eye = [Math.sin(yaw) * Math.cos(pitch), -Math.cos(yaw) * Math.cos(pitch), Math.sin(pitch)];
@@ -120,7 +120,7 @@ function Aircraft({
       p.mesh.map((f) => ({
         ...f,
         id: p.id,
-        paintDepth: depth(f.detail ? p.mesh[0].points : f.points) + (f.detail ? 0.0001 : 0) + (exploded ? (/^[CAD]/.test(p.id) ? 6 : model.id === "hind" && p.id.startsWith("R") ? 7 : (model.parts.indexOf(p) % 3) * 1.6) * eye[2] : 0),
+        paintDepth: depth(f.detail ? p.mesh[Math.max(0, f.parent)].points : f.points) + (f.detail ? 0.0001 : 0) + (exploded ? (/^[CAD]/.test(p.id) ? 6 : model.id === "hind" && p.id.startsWith("R") ? 7 : (model.parts.indexOf(p) % 3) * 1.6) * eye[2] : 0),
         points: f.points.map(([x, y, z]) => [
           x,
           y,
@@ -205,8 +205,10 @@ function Aircraft({
 
 export default function AircraftWorkbench() {
   const [selected, setSelected] = useState(0);
+  const [located, setLocated] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
   const [sheet, setSheet] = useState(1);
-  const [camera, setCamera] = useState<"iso" | "top" | "side">("iso");
+  const [camera, setCamera] = useState<"iso" | "top" | "side" | "bottom" | "rear">("iso");
   const [mode, setMode] = useState<"model" | "guide" | "print">("model");
   const [exploded, setExploded] = useState(false);
   const [step, setStep] = useState(0);
@@ -215,6 +217,8 @@ export default function AircraftWorkbench() {
   const current = instructions[step];
   function select(index: number) {
     setSelected(index);
+    setLocated(null);
+    setQuery("");
     setSheet(models[index].sheets[0]);
     setStep(0);
     setExploded(false);
@@ -312,7 +316,7 @@ export default function AircraftWorkbench() {
                 model={model}
                 camera={camera}
                 exploded={exploded}
-                highlight={mode === "guide" ? current.ids : []}
+                highlight={mode === "guide" ? current.ids : located ? [located] : []}
                 visible={
                   mode === "guide" && step > 0 && step < instructions.length - 1
                     ? instructions.slice(1, step + 1).flatMap((s) => s.ids)
@@ -361,6 +365,8 @@ export default function AircraftWorkbench() {
                       ["iso", "Perspective"],
                       ["top", "Top"],
                       ["side", "Side"],
+                      ["rear", "Rear"],
+                      ["bottom", "Underside"],
                     ] as const
                   ).map(([id, label]) => (
                     <button
@@ -377,6 +383,7 @@ export default function AircraftWorkbench() {
                 {model.parts.length} pieces per model
               </span>
             </div>
+            {located && mode === "model" && <div className="air-located" role="status">Highlighted: {located} · {model.parts.find(p => p.id === located)?.name}<button onClick={() => setLocated(null)}>Clear highlight</button></div>}
           </section>
           <aside className="air-panel" aria-live="polite">
             <span className="panel-eyebrow">
@@ -472,6 +479,11 @@ export default function AircraftWorkbench() {
             ))}
           </nav>
         )}
+        <section className="air-build-key" aria-label="Detail and assembly key">
+          <div><strong>Surface details</strong><p>Window frames, vents and access panels are printed decoration. Cut only the outer silhouette; score grey facet lines gently.</p></div>
+          <div><strong>Joining the shells</strong><p>Align the underside seams. The front tabs of the next numbered section slide inside the previous section. Dry-fit before adding glue.</p></div>
+          <div><strong>Inspect every side</strong><p>Use Rear to compare tail and engine symmetry, and Underside to check the landing gear. Locate a part below to highlight it in blue.</p></div>
+        </section>
         <section className="air-parts">
           <div className="section-title">
             <h2>
@@ -484,15 +496,21 @@ export default function AircraftWorkbench() {
               dashes = tabs
             </span>
           </div>
+          <label className="air-part-search">Find a piece
+            <input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Part ID or name, e.g. C02 or wheel" />
+          </label>
+          {!model.parts.some(p => (mode !== "guide" || current.ids.includes(p.id)) && `${p.id} ${p.name}`.toLowerCase().includes(query.trim().toLowerCase())) && <p className="air-part-note" role="status">No matching pieces in this view. Try a different ID or clear the search.</p>}
           <div className="air-parts-grid">
             {model.parts
-              .filter((p) => mode !== "guide" || current.ids.includes(p.id))
+              .filter((p) => (mode !== "guide" || current.ids.includes(p.id)) && `${p.id} ${p.name}`.toLowerCase().includes(query.trim().toLowerCase()))
               .map((p) => (
                 <article key={p.id}>
                   <Pattern part={p} />
                   <strong>
                     {p.id} / {p.name}
                   </strong>
+                  <p className="air-part-note">{p.checks.length ? "Shape the shell; fold lilac tabs inward. Printed panels stay uncut." : "Cut the outer outline. Keep printed surface details intact."}</p>
+                  <button className="air-locate-button" onClick={() => { setMode("model"); setLocated(p.id); setCamera("iso"); setExploded(false); document.querySelector(".air-stage")?.scrollIntoView({ block: "center", behavior: "instant" }); }}>Locate {p.id} in 3D</button>
                 </article>
               ))}
           </div>

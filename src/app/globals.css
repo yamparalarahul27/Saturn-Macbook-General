@@ -894,3 +894,13 @@ body {
 .air-orbit-tools button { padding:7px 10px; border:1px solid #dfe6ee; border-radius:6px; background:white; color:#354b65; cursor:pointer; }
 .air-orbit-tools button:disabled { opacity:.4; cursor:default; }
 .air-orbit-tools output { min-width:34px; text-align:center; }
+
+.air-stage .view-switch { flex-wrap:wrap; }
+.air-stage .stage-footer { gap:12px; flex-wrap:wrap; }
+.air-located { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 24px; background:#eaf0ff; color:#315eea; font-size:12px; }
+.air-located button, .air-locate-button { border:1px solid #ccd8ec; border-radius:6px; background:white; color:#315eea; padding:8px 10px; cursor:pointer; font-size:11px; }
+.air-build-key { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin:28px 0; padding:24px; background:#f5f7fa; border-radius:10px; }
+.air-build-key strong { font-size:13px; font-weight:500; }
+.air-build-key p, .air-part-note { font-size:12px; line-height:1.7; color:#687a90; margin:8px 0 14px; }
+.air-part-search { display:flex; align-items:center; gap:16px; margin-top:20px; font-size:12px; color:#53677c; }
+.air-part-search input { width:320px; border:1px solid #ccd8ec; border-radius:6px; background:white; padding:10px 12px; }
