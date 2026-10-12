@@ -72,15 +72,14 @@ Overall dimensions use the [Ministry of Defence commissioning report](https://ww
 
 ## Aircraft collection
 
-Open `/aircraft` from the carrier page. The first 1:400 pack adds six MiG-29K fighters and two Mil Mi-24 helicopters on two A4 landscape sheets (60 cut pieces total). The Mi-24 is explicitly a custom display choice, not a Vikramaditya air-group aircraft.
+The `/aircraft` shape-study edition replaces the previous flat-sided aircraft with faceted, tapered shells. A shared mesh generates the 3D views and the unfolded paper triangles, so the printable patterns match the preview geometry.
 
-- MiG-29K: 43.25 mm long, 29.975 mm wingspan; seven pieces, seven guide steps.
-- Mi-24: 43.75 mm fuselage, 43.25 mm swept rotor diameter; nine pieces, eight guide steps.
-- Includes assembled/exploded illustrations, numbered enlarged cutting patterns, page previews and a PDF download.
-- Print single-sided at 100% on 160–200 gsm card. Check the 50 mm calibration line. These open-bottom folded bodies omit landing gear; the fighter wings stay spread and helicopter rotors are fixed. Test-build one before making the whole pack.
+- MiG-29K: 20 pieces each. Tapered nose/fuselage, open-bottom rounded canopy, two separate swept wings, separate stabilizers, canted fins and paired three-section engine pods.
+- Mi-24: 20 pieces each. Stepped cockpit, deep cabin, tapering/rising tail boom, twin rounded engine fairings, drooping stub wings, swept fin and fixed rotors.
+- Six fighters and two helicopters: 160 pieces on four A4 landscape sheets. Fighter pairs occupy pages 1–3; helicopters occupy page 4.
+- Perspective, top and side views; exploded presentation; seven fighter steps and eight helicopter steps.
+- Print at 100% using 100–120 gsm paper. Grey dashed lines are gentle facet folds, blue dashed lines are glue-tab folds. Tabs are sub-millimetre: trial-build before making the fleet.
 
-Regenerate with `python3 scripts/generate-aircraft.py` using ReportLab and pypdf. This writes `src/data/aircraft.json`, the public sheet SVGs and matching PDFs in `public/kits/aircraft` and `output/pdf`. The generator checks A4 page sizes, page margins, separated part bounds, fighter dimensions and the main rotor radius. The browser uses the generated mesh and pattern data; additional mounting lines are printed on the fighter sheet.
+Run `python3 scripts/generate-aircraft.py` with ReportLab and pypdf. The generator unfolds triangulated rings from `scripts/aircraft_geometry.py` and checks triangle edge lengths, fold connections, shell-face/tab intersections, matching section rings, page sizes and piece separation. Source data and printable files are generated; edit the geometry module to change shapes.
 
-These are original simplified craft patterns. Real-world dimensions anchor their overall size; local shapes, cross-sections, joints and heights are approximations, not blueprint reconstructions. Physical assembly and paper-thickness tolerances remain untested.
-
-The detail edition adds separate MiG engine housings and a raised framed canopy, and separate Mi-24 engine covers. Printed panel lines, roundels, fin stripes, cabin details, camouflage and rotor-tip bands use the same geometry in the PDF and on-screen preview. Paint schemes are illustrative, not a recreation of a specific airframe. New cap parts have no corner tabs: fold their four walls down and glue the lower edges to the marked mounting surfaces.
+References are documented in `docs/references/aircraft-research.md`. Public recognition drawings and photographs inform the silhouettes; cross-sections remain inferred. This is a faceted modelling prototype, not a dimension-certified replica. Physical assembly and paper-thickness tolerance are untested. Landing gear and small equipment are omitted. The Mi-24 is a custom display addition rather than a claimed Vikramaditya operating aircraft.
