@@ -13,7 +13,7 @@ import {
   type Projection,
   towardViewer,
 } from "@/lib/anatomy/iso-kit";
-import { ship, splitOutline } from "@/lib/ship";
+import { ship, sectionOutline } from "@/lib/ship";
 
 import { SurfaceArt } from "./surface-art";
 
@@ -98,14 +98,13 @@ function HullArtwork({
 export function ShipModel({
   view,
   selected = 0,
-  visible = 10,
-  details = [11, 12, 13, 14],
+  visible = ship.parts.map((p) => p.id),
 }: {
   view: ModelView;
   selected?: number;
-  visible?: number;
-  details?: number[];
+  visible?: number[];
 }) {
+  const present = (id: number) => visible.includes(id);
   const uid = useId().replaceAll(":", "");
   const exploded = view === "exploded";
   const height = exploded ? 220 : 86;
@@ -147,13 +146,18 @@ export function ShipModel({
           12: 140,
           13: 155,
           14: 55,
+          17: 25,
+          18: 25,
+          19: 13,
+          20: 13,
         }[id] ?? 0)
       : 0;
   const highlight = (id: number) =>
     selected === id ||
-    (selected === 1 && id === 2) ||
-    (selected === 3 && [3, 4, 5].includes(id)) ||
-    (selected === 8 && id === 11) ||
+    (selected === 1 && ship.hullParts.includes(id)) ||
+    (selected === 3 && [...ship.deckParts, ...ship.joinParts].includes(id)) ||
+    ([8, 11].includes(selected) && [8, 11].includes(id)) ||
+    (selected === 21 && ship.ribParts.includes(id)) ||
     (selected === 10 && [12, 13].includes(id));
   const deckZ = 24 + offset(3);
   const deckPath = pathOf(
@@ -280,97 +284,131 @@ export function ShipModel({
         opacity=".12"
         filter={`url(#${uid}-shadow)`}
       />
-      {[1, 2]
-        .filter((id) => id <= visible)
-        .map((id) => {
-          const ring = splitOutline(ship.hull.outline, id === 2);
-          if (visible > 2 && !exploded)
-            return (
-              <g key={id}>
-                <Solid
-                  ring={ring}
-                  z={0}
-                  h={24}
-                  p={p}
-                  selected={highlight(id)}
-                  color="#b6c2ce"
-                />
-                <HullArtwork ring={ring} id={id} p={p} />
-              </g>
-            );
-          const [vx, vy] = towardViewer(p);
-          const sides = ring.map((a, i) => {
-            const b = ring[(i + 1) % ring.length];
-            const front = (b[1] - a[1]) * vx - (b[0] - a[0]) * vy > 0;
-            return {
-              front,
-              d: pathOf(
-                [
-                  iso([a[0], a[1], 0], p),
-                  iso([b[0], b[1], 0], p),
-                  iso([b[0], b[1], 24], p),
-                  iso([a[0], a[1], 24], p),
-                ],
-                true,
-              ),
-            };
-          });
+      {ship.hullParts.filter(present).map((id) => {
+        const part = ship.parts[id - 1];
+        const ring = sectionOutline(ship.hull.outline, part.x, part.x + part.w);
+        if (present(3) && !exploded)
           return (
-            <g
-              key={id}
-              stroke={highlight(id) ? "#315eea" : "#8090a2"}
-              strokeWidth=".75"
-            >
-              {sides
-                .filter((s) => !s.front)
-                .map((s, i) => (
-                  <path
-                    key={i}
-                    d={s.d}
-                    fill={highlight(id) ? "#d2dfff" : "#e2e7ed"}
-                  />
-                ))}
-              <path
-                d={pathOf(
-                  ring.map(([x, y]) => iso([x, y, 0], p)),
-                  true,
-                )}
-                fill="#c3cdd7"
+            <g key={id}>
+              <Solid
+                ring={ring}
+                z={0}
+                h={24}
+                p={p}
+                selected={highlight(id)}
+                color="#b6c2ce"
               />
-              {sides
-                .filter((s) => s.front)
-                .map((s, i) => (
-                  <path
-                    key={i}
-                    d={s.d}
-                    fill={highlight(id) ? "#b7cafa" : "#b6c2ce"}
-                  />
-                ))}
               <HullArtwork ring={ring} id={id} p={p} />
             </g>
           );
-        })}
-      {visible >= 3 && (
+        const [vx, vy] = towardViewer(p);
+        const sides = ring.map((a, i) => {
+          const b = ring[(i + 1) % ring.length];
+          const front = (b[1] - a[1]) * vx - (b[0] - a[0]) * vy > 0;
+          return {
+            front,
+            d: pathOf(
+              [
+                iso([a[0], a[1], 0], p),
+                iso([b[0], b[1], 0], p),
+                iso([b[0], b[1], 24], p),
+                iso([a[0], a[1], 24], p),
+              ],
+              true,
+            ),
+          };
+        });
+        return (
+          <g
+            key={id}
+            stroke={highlight(id) ? "#315eea" : "#8090a2"}
+            strokeWidth=".75"
+          >
+            {sides
+              .filter((s) => !s.front)
+              .map((s, i) => (
+                <path
+                  key={i}
+                  d={s.d}
+                  fill={highlight(id) ? "#d2dfff" : "#e2e7ed"}
+                />
+              ))}
+            <path
+              d={pathOf(
+                ring.map(([x, y]) => iso([x, y, 0], p)),
+                true,
+              )}
+              fill="#c3cdd7"
+            />
+            {(() => {
+              const ribId = ship.ribParts[ship.hullParts.indexOf(id)];
+              if (!present(ribId)) return null;
+              const r = ship.parts[ribId - 1];
+              return (
+                <g>
+                  <Solid
+                    ring={plane(r.x, r.y, r.w, r.d)}
+                    z={r.z}
+                    h={r.h}
+                    p={p}
+                    selected={highlight(ribId)}
+                    color="#c5d2df"
+                  />
+                  {[0, r.h - 0.12].map((z) => (
+                    <Solid
+                      key={z}
+                      ring={plane(r.x - 2.57, r.y + 0.57, 2.57, r.d - 1.14)}
+                      z={z}
+                      h={0.12}
+                      p={p}
+                      selected={highlight(ribId)}
+                    />
+                  ))}
+                </g>
+              );
+            })()}
+            {sides
+              .filter((s) => s.front)
+              .map((s, i) => (
+                <path
+                  key={i}
+                  d={s.d}
+                  fill={highlight(id) ? "#b7cafa" : "#b6c2ce"}
+                />
+              ))}
+            <HullArtwork ring={ring} id={id} p={p} />
+          </g>
+        );
+      })}
+      {present(3) && (
         <>
-          {exploded && (
-            <Solid
-              ring={plane(192.857, 8, 20, 70)}
-              z={23.8 + offset(5)}
-              h={0.2}
-              p={p}
-              selected={highlight(5)}
-            />
-          )}
-          {[3, 4].map((id) => (
-            <Solid
-              key={id}
-              ring={splitOutline(ship.deck.outline, id === 4)}
-              z={deckZ}
-              h={0.4}
-              p={p}
-              selected={highlight(id)}
-            />
-          ))}
+          {exploded &&
+            ship.joinParts.filter(present).map((id) => {
+              const a = ship.parts[id - 1];
+              return (
+                <Solid
+                  key={id}
+                  ring={plane(a.x, a.y, a.w, a.d)}
+                  z={a.z + offset(id)}
+                  h={a.h}
+                  p={p}
+                  selected={highlight(id)}
+                />
+              );
+            })}
+          {ship.deckParts.filter(present).map((id) => {
+            const a = ship.parts[id - 1];
+            return (
+              <Solid
+                key={id}
+                ring={sectionOutline(ship.deck.outline, a.x, a.x + a.w)}
+                z={deckZ}
+                h={0.4}
+                p={p}
+                selected={highlight(id)}
+              />
+            );
+          })}
           <g clipPath={`url(#${uid}-deck)`}>
             <g transform={topMatrix([0, 0], deckZ + 0.4, p)} fill="none">
               <SurfaceArt name="deck" />
@@ -383,7 +421,7 @@ export function ShipModel({
               >
                 R33
               </text>
-              {visible < 7 && (
+              {!present(7) && (
                 <rect
                   x={175}
                   y={8}
@@ -398,7 +436,7 @@ export function ShipModel({
           </g>
         </>
       )}
-      {visible >= 6 && (
+      {present(6) && (
         <g
           stroke={highlight(6) ? "#315eea" : "#8c9cad"}
           strokeWidth={highlight(6) ? 1.6 : 0.75}
@@ -441,10 +479,10 @@ export function ShipModel({
           />
         </g>
       )}
-      {visible >= 7 && box(7)}
-      {visible >= 9 && box(9)}
-      {details.includes(14) && box(14)}
-      {details.includes(11) &&
+      {present(7) && box(7)}
+      {present(9) && box(9)}
+      {present(14) && box(14)}
+      {present(11) &&
         (() => {
           const a = ship.parts[10];
           return (
@@ -457,9 +495,9 @@ export function ShipModel({
             />
           );
         })()}
-      {visible >= 8 && box(8)}
-      {visible >= 10 && box(10)}
-      {details.includes(12) &&
+      {present(8) && box(8)}
+      {present(10) && box(10)}
+      {present(12) &&
         (() => {
           const a = ship.parts[11];
           return (
@@ -472,7 +510,7 @@ export function ShipModel({
             />
           );
         })()}
-      {details.includes(13) &&
+      {present(13) &&
         (() => {
           const a = ship.parts[12],
             z = a.z + offset(13);

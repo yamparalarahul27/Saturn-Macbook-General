@@ -415,7 +415,7 @@ h1 em {
 }
 .parts-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 13px;
 }
 .part-card {
@@ -845,5 +845,9 @@ body {
   margin-bottom: 6px;
 }
 .stage-footer {
+  flex-wrap: wrap;
+}
+
+.sheet-pagination {
   flex-wrap: wrap;
 }

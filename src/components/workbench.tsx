@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useBuildProgress } from "@/lib/build-progress";
-import { kitUrl, ship, steps } from "@/lib/ship";
+import { kit, kitUrl, ship, steps } from "@/lib/ship";
 import { ShipModel, type ModelView } from "./ship-model";
 
 function Icon({
@@ -78,14 +78,7 @@ function Icon({
     </svg>
   );
 }
-const sheetNames = [
-  "Aft hull",
-  "Forward hull",
-  "Aft deck & joining strip",
-  "Forward deck & ski jump",
-  "Island & upper structures",
-  "Gallery, radar & aft tower",
-];
+const sheetNames = kit.sheetNames;
 const pdf = `${kitUrl}/vikramaditya-a4.pdf`;
 
 export default function Workbench() {
@@ -209,7 +202,7 @@ export default function Workbench() {
             ))}
           </div>
           <span className="paper-spec">
-            A4 paper <span /> Approx. 1:700
+            A4 paper <span /> Approx. 1:{kit.scale}
           </span>
         </div>
         <div
@@ -255,7 +248,7 @@ export default function Workbench() {
               <div className="stage-header">
                 <span className="figure-label">
                   {tab === "sheets"
-                    ? `Sheet 0${sheet}`
+                    ? `Sheet ${String(sheet).padStart(2, "0")}`
                     : isGuide
                       ? `Step ${String(step + 1).padStart(2, "0")}`
                       : "The finished build"}
@@ -283,8 +276,7 @@ export default function Workbench() {
                   <ShipModel
                     view={view}
                     selected={activePart}
-                    visible={isGuide ? current.visible : 10}
-                    details={isGuide ? current.details : undefined}
+                    visible={isGuide ? current.visible : undefined}
                   />
                 </div>
               )}
@@ -329,25 +321,23 @@ export default function Workbench() {
                     ? "Print the PDF at 100%"
                     : view === "detail"
                       ? "Island & radar detail"
-                      : "40.6 cm from stern to bow"}
+                      : "71 cm from stern to bow"}
                 </span>
               </div>
             </section>
             <aside className="task-panel">
               {tab === "overview" ? (
                 <>
-                  <div className="panel-eyebrow">
-                    Your next afternoon project
-                  </div>
+                  <div className="panel-eyebrow">The 71 cm edition</div>
                   <h2>
                     From flat sheets
                     <br />
                     to flight deck.
                   </h2>
                   <p className="panel-description">
-                    Build the signature ski jump, starboard island, and broad
-                    landing deck of India’s aircraft carrier, with a layered
-                    bridge and separate radar assembly.
+                    Build a reinforced four-section hull, signature ski jump,
+                    starboard island, and broad landing deck of India’s aircraft
+                    carrier, with a layered bridge and separate radar assembly.
                   </p>
                   <dl className="spec-list">
                     <div>
@@ -360,7 +350,7 @@ export default function Workbench() {
                     </div>
                     <div>
                       <dt>Finished size</dt>
-                      <dd>40.6 × 8.6 cm</dd>
+                      <dd>71 × 15 cm</dd>
                     </div>
                     <div>
                       <dt>Build style</dt>
@@ -379,7 +369,7 @@ export default function Workbench() {
                     <span>
                       Print single-sided, at actual size.
                       <br />
-                      Use 160–200 gsm paper.
+                      Use printer-compatible 200 gsm cardstock.
                     </span>
                   </div>
                 </>
@@ -541,22 +531,28 @@ export default function Workbench() {
               </div>
               <div className="parts-grid">
                 {[
-                  { id: 1, title: "The hull", sub: "Sheets 1 & 2" },
-                  { id: 3, title: "Flight deck", sub: "Sheets 3 & 4" },
-                  { id: 6, title: "Ski jump", sub: "Sheet 4" },
-                  { id: 7, title: "The island", sub: "Sheet 5" },
-                  { id: 8, title: "Bridge & gallery", sub: "Sheets 5 & 6" },
-                  { id: 9, title: "Funnel", sub: "Sheet 5" },
-                  { id: 10, title: "Foremast & radar", sub: "Sheets 5 & 6" },
-                  { id: 14, title: "Aft signal tower", sub: "Sheet 6" },
+                  { id: 1, title: "Four-section hull", sub: "Sheets 1–4" },
+                  { id: 3, title: "Four-panel deck", sub: "Sheets 5–8" },
+                  { id: 6, title: "Ski jump", sub: "Sheet 12" },
+                  { id: 7, title: "The island", sub: "Sheet 9" },
+                  { id: 8, title: "Bridge & gallery", sub: "Sheets 10 & 12" },
+                  { id: 9, title: "Funnel", sub: "Sheet 10" },
+                  { id: 10, title: "Foremast & radar", sub: "Sheets 11 & 12" },
+                  { id: 14, title: "Aft signal tower", sub: "Sheet 11" },
+                  {
+                    id: 21,
+                    title: "Internal supports",
+                    sub: "Sheet 13 · See exploded view",
+                  },
                 ].map((part) => (
                   <button
                     className="part-card"
                     key={part.id}
                     aria-pressed={selected === part.id}
-                    onClick={() =>
-                      setSelected(selected === part.id ? 0 : part.id)
-                    }
+                    onClick={() => {
+                      setSelected(selected === part.id ? 0 : part.id);
+                      if (part.id === 21) setView("exploded");
+                    }}
                   >
                     <span className="part-thumb">
                       <Image
@@ -601,10 +597,10 @@ export default function Workbench() {
           <summary>About this paper edition</summary>
           <p>
             This is an original, simplified paper interpretation of INS
-            Vikramaditya, with overall dimensions at approximately 1:700. Small
-            fittings, the underwater hull, and weapons are omitted. The ski jump
-            uses a straight wedge for easier assembly. Aircraft are planned and
-            are not included in this pack.
+            Vikramaditya, with overall dimensions at approximately 1:{kit.scale}
+            . Small fittings, the underwater hull, and weapons are omitted. The
+            ski jump uses a straight wedge for easier assembly. Aircraft are
+            planned and are not included in this pack.
           </p>
           <p>
             Version {ship.version}: printable dimensions and joins have been

@@ -92,18 +92,21 @@ def artwork(data):
                     rect(2,2,width-4,3,'#adb9c3','#8b9ca9',.18)
                     for x in range(3,int(width)-2,2):line(x,2.3,x,4.7,'#758a9c',.2)
     # Hull side artwork follows each actual unfolded edge, excluding joining walls.
-    for forward in [False, True]:
-        ring=[];split=data['split']
-        hull=data['hull']['outline']
-        for a,b in zip(hull,hull[1:]+hull[:1]):
-            da=(a[0]-split)*(1 if forward else -1);db=(b[0]-split)*(1 if forward else -1)
-            if da>=-1e-8:ring.append(a)
-            if da<0<db or db<0<da:
-                t=da/(da-db);ring.append([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])])
+    for part in [p for p in data['parts'] if p['type']=='hull']:
+        ring=data['hull']['outline']
+        for split,sign in [(part['x'],1),(part['x']+part['w'],-1)]:
+            output=[]
+            for a,b in zip(ring,ring[1:]+ring[:1]):
+                da=(a[0]-split)*sign;db=(b[0]-split)*sign
+                if da>=-1e-8:output.append(a)
+                if da<0<db or db<0<da:
+                    t=da/(da-db);output.append([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])])
+            ring=output
         for i,(a,b) in enumerate(zip(ring,ring[1:]+ring[:1])):
-            line,rect,circle=surface(f"hull-{2 if forward else 1}-{i}")
+            line,rect,circle=surface(f"hull-{part['id']}-{i}")
             width=math.dist(a,b)
-            if width<20 or abs(a[0]-split)<1e-7 and abs(b[0]-split)<1e-7:continue
+            joining=abs(a[0]-b[0])<1e-7 and 0<a[0]<data['length']
+            if width<20 or joining:continue
             line(1,22.5,width-1,22.5,'#8c9aa7',.4)
             line(1,3,width-1,3,'#c0cad3',.18)
             for x in range(14,int(width)-10,12):

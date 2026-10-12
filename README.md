@@ -1,6 +1,6 @@
 # Paper Craft
 
-A Next.js workbench for printing and assembling paper models. The first kit is a simplified **INS Vikramaditya** waterline carrier, approximately 1:700 scale: 40.6 cm long, 8.6 cm wide, fourteen cut-out pieces on six A4 landscape sheets.
+A Next.js workbench for printing and assembling paper models. The first kit is a simplified **INS Vikramaditya** waterline carrier, approximately 1:400 scale: 71 cm long, 15 cm wide, twenty-four cut-out pieces on thirteen A4 landscape sheets.
 
 ## Run
 
@@ -23,18 +23,18 @@ npm start
 ## Included
 
 - Assembled, exploded, top, and island close-up views, with part highlighting.
-- Eleven on-screen assembly steps, numbered to match the printable parts, with progress saved on the device.
-- Six sheet previews and an actual-size, vector PDF download.
+- Twelve on-screen assembly steps, numbered to match the printable parts, with progress saved on the device.
+- Thirteen sheet previews and an actual-size, vector PDF download.
 - Matching hull/deck seams, glue tabs, fold lines, mounting guides, and a 50 mm print calibration line.
 - Desktop-only workspace (1100 px minimum), keyboard-operable controls, and reduced-motion support.
 
-Version 0.2 adds a bridge gallery, a foremast platform with a folded radar screen, a separate aft signal tower, and shared printed surface detail. Assembly steps show every required piece and sheet. Progress is stored per kit version so an older step sequence cannot mark new work complete.
+Version 0.3 enlarges the model to 71 cm and replaces the two hull/deck halves with four sections, three deck joining strips, and four internal transverse deck supports. It retains the bridge gallery, foremast platform and folded radar screen, separate aft signal tower, and shared surface artwork. Assembly steps show every required piece and sheet. Progress is stored per kit version so an older step sequence cannot mark new work complete.
 
 Aircraft are planned for the same scale and **are not included** in this first pack. This is a simplified interpretation, not an engineering model or an official Indian Navy product. Digital geometry is validated; real-paper assembly has not yet been tested.
 
 ## Print
 
-Download `public/kits/vikramaditya/vikramaditya-a4.pdf`. Use **A4 landscape, Actual size / 100%, single-sided**. Disable Fit to page. Check the 50 mm line before cutting. Use 160–200 gsm paper if supported by your printer.
+Download `public/kits/vikramaditya/vikramaditya-a4.pdf`. Use **A4 landscape, Actual size / 100%, single-sided**. Disable Fit to page. Check the 50 mm line before cutting. Use printer-compatible 200 gsm cardstock. The PDF is already 1:400: do not enlarge it again or mix in pieces from the old 1:700 edition.
 
 ## Regenerate the printable kit
 
@@ -46,17 +46,23 @@ python3 -m venv .venv
 .venv/bin/python scripts/generate-kit.py
 ```
 
-This writes the PDF into `output/pdf/` and copies it, along with sheet and part SVG previews, into `public/kits/vikramaditya/`. The generator checks exact A4 media boxes, printable margins, face/tab overlap, separate-piece overlap, matching middle seams, overall scale, ramp angle, and contact between the added stacked structures. It does not establish real-world assembly tolerances.
+This writes the PDF into `output/pdf/` and copies it, along with sheet and part SVG previews, into `public/kits/vikramaditya/`. The generator checks exact A4 media boxes, printable margins, face/tab overlap, separate-piece overlap, all three matching hull/deck seams, total 710 mm length, support widths/heights, ramp angle, and contact between the stacked structures. It does not establish real-world assembly tolerances.
 
 ## Main files
 
-- `src/data/vikramaditya.json` — shared model dimensions, part IDs, sheet assignments.
-- `src/lib/ship.ts` — assembly instructions and split-outline geometry.
+- `src/data/vikramaditya.json` — physical model dimensions in millimetres, part IDs, sheet assignments and section groups.
+- `src/lib/ship.ts` — assembly instructions, section clipping and conversion to stable illustration coordinates.
 - `src/components/ship-model.tsx` — interactive SVG illustration.
 - `src/components/workbench.tsx` — model, guide, and print workspace.
 - `scripts/surface_art.py` — schematic deck and wall artwork; exported to `src/data/surface-art.json` for the browser.
 - `scripts/generate-kit.py` — dimensioned paper nets, PDF/SVG export, geometric assertions.
 - `docs/design.md` — design rationale, scope, and references.
+
+## Construction
+
+Hull order is **1 → 2 → 15 → 16**; each section is 177.5 mm long. Deck order is **3 → 4 → 17 → 18** with strips **5, 19, 20** underneath the three seams. Supports **21–24** fit their matching hull sections at the midpoint, before the deck is glued on. Their webs are 42 mm high, with separate BASE and DECK tabs. Consult the on-screen guide for folding and glue orientation.
+
+Physical source dimensions live in the JSON. `illustrationScale / scale` converts artwork coordinates to print millimetres; the browser applies the inverse conversion to geometry so the PDF and illustration stay aligned. A 50 mm calibration line is never scaled. The larger kit retains schematic exterior shapes: it is not a new blueprint reconstruction.
 
 ## Attribution
 
