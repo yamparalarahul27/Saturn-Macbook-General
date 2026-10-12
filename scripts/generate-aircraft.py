@@ -1,6 +1,7 @@
 """Original simplified 1:400 aircraft nets, shared PDF/SVG/preview geometry."""
 from pathlib import Path
-import json, math, html, shutil
+import json, math, html, shutil, builtins
+from aircraft_detail import enrich
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor
@@ -9,8 +10,8 @@ ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'public/kits/aircraft'; OUT.mkdir(parents=True,exist_ok=True)
 PDF=ROOT/'output/pdf/aircraft-a4.pdf'
 C='#ced9df'; DARK='#536a7c'; BLUE='#315eea'; GLUE='#eee8f6'; GREEN='#b8c4ae'
-def face(points,fill=C):return {'points':points,'fill':fill}
-def part(id,name,faces,folds=[],art=[],mesh=[]):return dict(id=id,name=name,faces=faces,folds=folds,art=art,mesh=mesh)
+def face(points,fill=C):return {'points':points,'fill':fill,'detail':False}
+def part(id,name,faces,folds=None,art=None,mesh=None):return dict(id=id,name=name,faces=faces,folds=folds or [],art=art or [],mesh=mesh or [])
 def rect(x,y,w,h):return [[x,y],[x+w,y],[x+w,y+h],[x,y+h]]
 def flat(poly,z=0):return [[x,y,z] for x,y in poly]
 def body(id,L,profile,a,b,w,depth,color):
@@ -19,13 +20,13 @@ def body(id,L,profile,a,b,w,depth,color):
     folds=[[[a,0],[b,0]],[[a,-w],[b,-w]]]
     # Two shaped sides hinge down from the narrow roof; open underside glues to wing/deck.
     meshes=[face([[x,-w/2,depth-y] for x,y in profile],color),face([[x,w/2,depth-y] for x,y in profile],color),face([[a,-w/2,depth],[b,-w/2,depth],[b,w/2,depth],[a,w/2,depth]],color)]
-    windows=[[[4,2.1],[7,1],[10,1],[10,2.8],[5,3.3]]] if id=='M2' else [[[3,3],[6,1.5],[8,1.5],[8,4],[3,5]],[[9,1.5],[12,1],[13,4],[9,4]]]
+    windows=[] if id=='M2' else [[[3,3],[6,1.5],[8,1.5],[8,4],[3,5]],[[9,1.5],[12,1],[13,4],[9,4]]]
     art=[face(p,DARK) for p in windows]+[face(mirror(p),DARK) for p in windows]
     for p in windows:
         meshes += [face([[x,-w/2-.02,depth-y] for x,y in p],DARK),face([[x,w/2+.02,depth-y] for x,y in p],DARK)]
     return part(id,'Folded fuselage',[face(profile,color),face(mirror(profile),color),face(roof,color)],folds,art,meshes)
 L=43.25; S=29.975
-half=[[0,0],[8,-1.5],[16,-3],[26,-S/2],[32,-S/2],[29,-4],[35,-4],[40,-9],[L,-9],[41,-2],[L,-2],[L,0]]
+half=[[0,0],[8,-1.5],[16,-3],[26,-S/2],[32,-S/2],[29,-4],[35,-4],[40,-9],[L,-9],[L,-2],[L,0]]
 wing=half+[[x,-y] for x,y in reversed(half[1:-1])]
 mig=[part('M1','Wing and tailplane',[face(wing)],art=[face(rect(18,-3,18,6),'#b9c6cf')],mesh=[face(flat(wing)),face(flat(rect(18,-3,18,6),.02),'#b9c6cf')]),body('M2',L,[[0,3.5],[0,3],[5,1],[8,0],[29,0],[L,1.5],[L,3.5]],8,29,3,3.5,C)]
 for id,y in [('M3',-2.4),('M4',2.4)]:
@@ -57,6 +58,7 @@ heli.append(part('H7','Tail rotor',[face(tr,DARK)],mesh=[face([[41+x,1.7,7+y] fo
 for shape in [rect(14,4.9,6,.2),rect(34.7,7.6,.6,.4),rect(40.7,2.7,.6,.6)]:
     heli[0]['art'].extend([face(shape,BLUE),face([[x,-3-y] for x,y in shape],BLUE)])
 heli[0]['art'].append(face(rect(13,-2.5,2,2),GLUE))
+enrich(mig,heli,face,part,rect,flat)
 models=[dict(id='mig',name='MiG-29K',label='Carrier fighter',size='43.25 mm long · 29.98 mm wingspan',count=6,parts=mig),dict(id='hind',name='Mil Mi-24',label='Custom display addition',size='43.75 mm fuselage · 43.25 mm rotor diameter',count=2,parts=heli)]
 # All browser coordinates and print paths are generated from these same parts.
 (ROOT/'src/data/aircraft.json').write_text(json.dumps(models,indent=2)+'\n')
@@ -92,32 +94,32 @@ def drawpart(p,x,y):
     text(x,y+y1-y0+3,p['id'],2.2)
     return (x,y,x+x1-x0,y+y1-y0+3)
 def pagehead(title,subtitle,page):
-    text(12,12,'PAPER CRAFT / AIRCRAFT COLLECTION',3,BLUE);text(12,20,title,4.5);text(12,27,subtitle,2.5)
+    text(12,12,'PAPER CRAFT / AIRCRAFT COLLECTION / DETAIL EDITION',3,BLUE);text(12,20,title,4.5);text(12,27,subtitle,2.5)
     text(242,12,f'1:400  /  A4  /  {page} of 2',2.7)
 def footer():
-    line([12,187],[285,187], '#ced9df');text(12,194,'Solid: cut   |   Blue dashed: fold   |   Lilac: glue foot   |   Score before cutting.',2.6)
+    line([12,187],[285,187], '#ced9df');text(12,194,'Outer outline: cut | Blue dashed: fold | Fine grey: printed detail | Lilac: glue foot.',2.6)
     text(12,200,'Print single-sided at 100% / Actual size. No Fit to page. Use 160-200 gsm card.',2.6)
     text(12,205,'Simplified display miniatures. Trial-build one before making the fleet. Guide: /aircraft',2.4)
     line([235,201],[285,201]);line([235,199],[235,203]);line([285,199],[285,203]);text(251,198,'50 mm check',2.4)
 def savepage(n):
     (OUT/f'sheet-{n}.svg').write_text(f'<svg xmlns="http://www.w3.org/2000/svg" width="297mm" height="210mm" viewBox="0 0 297 210"><rect width="297" height="210" fill="white"/>'+''.join(svg)+'</svg>')
     c.showPage();svg.clear()
-pagehead('MiG-29K / six carrier fighters','Four pieces per aircraft. Wings stay spread in this edition. Blue lines on M1 locate the fuselage and fin feet; do not fold M1.',1)
+pagehead('MiG-29K / six carrier fighters','Seven pieces per aircraft. Includes raised canopy and twin engine housings. Blue guides on M1 are not folds.',1)
 for row in range(2):
     for col in range(3):
         x=12+col*94;y=35+row*75
         text(x,y,f'AIRCRAFT {row*3+col+1:02d}',2.4,BLUE)
-        boxes=[drawpart(mig[0],x,y+5),drawpart(mig[1],x,y+43),drawpart(mig[2],x+56,y+8),drawpart(mig[3],x+70,y+8)]
+        boxes=[drawpart(mig[0],x,y+5),drawpart(mig[1],x,y+43),drawpart(mig[2],x+56,y+8),drawpart(mig[3],x+70,y+8),drawpart(mig[4],x+53,y+24),drawpart(mig[5],x+53,y+35),drawpart(mig[6],x+53,y+48)]
         # Printed mounting guides for fuselage rails and both fin feet.
         for v in [-1.5,1.5]:line([x+8,y+5+S/2+v],[x+29,y+5+S/2+v],BLUE,True,.12)
-        for v in [-2.4,2.4]:line([x+34,y+5+S/2+v],[x+41,y+5+S/2+v],BLUE,True,.12)
+        for v in [-4.1,-1.9,1.9,4.1]:line([x+25.25,y+5+S/2+v],[x+43.25,y+5+S/2+v],BLUE,True,.12)
         for i,a in enumerate(boxes):
             for b in boxes[i+1:]:assert a[2]<b[0] or b[2]<a[0] or a[3]<b[1] or b[3]<a[1],('overlap',a,b)
 footer();savepage(1)
-pagehead('Mil Mi-24 / two display helicopters','Custom addition to the carrier display; not a Vikramaditya air-group aircraft. Seven pieces per helicopter.',2)
+pagehead('Mil Mi-24 / two display helicopters','Custom addition to the carrier display; not a Vikramaditya air-group aircraft. Nine pieces per helicopter. Includes two engine covers.',2)
 for n in range(2):
     x=14+n*140;y=38;text(x,y,f'HELICOPTER {n+1:02d}',2.5,BLUE)
-    positions=[(x,y+8),(x+62,y+8),(x+79,y+8),(x+97,y+8),(x,y+58),(x+63,y+60),(x+88,y+60)]
+    positions=[(x,y+8),(x+62,y+8),(x+79,y+8),(x+97,y+8),(x,y+58),(x+63,y+60),(x+88,y+60),(x+61,y+118),(x+85,y+118)]
     boxes=[drawpart(p,*pos) for p,pos in zip(heli,positions)]
     text(x+61,y+87,'H6: fold four sides down.',2.5);text(x+61,y+92,'Glue lower edges to H1 roof.',2.5)
     text(x+61,y+99,'H5: glue centre onto H6.',2.5);text(x+61,y+106,'H7: glue to the tail side.',2.5)
@@ -129,4 +131,17 @@ for p in r.pages:assert abs(float(p.mediabox.width)/mm-297)<.001 and abs(float(p
 assert max(x for x,y in wing)-min(x for x,y in wing)==43.25
 assert abs(max(y for x,y in wing)-min(y for x,y in wing)-29.975)<1e-8
 assert all(abs(math.hypot(*rotor[i])-21.625)<1e-8 for i in range(len(rotor)) if i%4 in [1,2])
-print('PASS: two exact A4 pages; 6 x 4 + 2 x 7 = 38 parts; margins and part separation; 1:400 dimensions; shared SVG/PDF geometry.')
+# Artwork must stay inside each part's bounds; no shared mutable art collections.
+allparts=mig+heli
+assert len({builtins.id(p['art']) for p in allparts})==len(allparts)
+for p in allparts:
+    x0,y0,x1,y1=bounds(p)
+    for art in p['art']:
+        assert all(x0-.001<=x<=x1+.001 and y0-.001<=y<=y1+.001 for x,y in art['points']), (p['id'],'art outside part bounds')
+    for a,b in p['folds']:
+        shared=sum(1 for f in p['faces'] for u,v in zip(f['points'],f['points'][1:]+f['points'][:1]) if (a==u and b==v) or (a==v and b==u))
+        assert shared==2,(p['id'],'hinge not shared by exactly two faces')
+assert min(v[2] for f in mig[2]['mesh'] for v in f['points'])==1.5
+assert abs(min(v[2] for f in mig[6]['mesh'] for v in f['points'])-3.5)<1e-8
+assert all(abs(min(v[2] for f in p['mesh'] for v in f['points'])-10)<1e-8 for p in heli[7:])
+print('PASS: two exact A4 pages; 6 x 7 + 2 x 9 = 60 parts; margins and part separation; 1:400 dimensions; shared SVG/PDF geometry.')

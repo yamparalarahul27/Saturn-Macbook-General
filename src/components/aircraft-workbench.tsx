@@ -11,7 +11,7 @@ const guides = {
   mig: [
     {
       title: "Prepare one fighter",
-      ids: ["M1", "M2", "M3", "M4"],
+      ids: ["M1", "M2", "M3", "M4", "M5", "M6", "M7"],
       text: "Print page 1 at 100% on 160–200 gsm card. Check the 50 mm ruler. Start with one of the six numbered sets. Score blue dashed lines with a blunt tool before cutting; the blue lines on M1 are placement guides, not folds.",
     },
     {
@@ -25,21 +25,31 @@ const guides = {
       text: "Cut M2 as one connected piece. Fold both long dashed hinges down 90° from the narrow roof, with the printed sides facing out. This makes an open-bottom body. Apply a fine bead of glue to its lower edges between the front and rear ends of the roof. Seat these edges on the two central dashed rails on M1, with both noses pointing the same way. Hold upright until set; leave the underside and ends open.",
     },
     {
+      title: "Fold the twin engine housings",
+      ids: ["M5", "M6"],
+      text: "Cut M5 and M6 around their outside outlines. Score the four edges of each long central roof, then fold both side panels and both dark end panels down 90°. Each piece forms an open-bottom housing, 1.5 mm high. Glue the lower edges onto the outer blue rails of M1, with the dark exhaust ends flush with the aircraft tail. M5 goes on the left and M6 on the right when viewed from behind. Do not cut the fine printed nozzle bands or roof markings.",
+    },
+    {
+      title: "Raise the cockpit canopy",
+      ids: ["M7"],
+      text: "Fold all four panels down from M7’s blue-glazed roof to make a 1.1 mm-high open-bottom cap. The smaller glazed panel faces the nose. Glue its lower edges to M2’s narrow roof: the canopy begins exactly at the front of that roof, 8 mm behind the nose, centred across it. Keep the pale canopy frames intact; they are printed detail, not cuts.",
+    },
+    {
       title: "Stand up the twin fins",
       ids: ["M3", "M4"],
-      text: "Fold each lilac foot 90° from its fin. Place M3 on the left rear guide and M4 on the right rear guide, looking from the tail toward the nose. Glue the feet flat onto M1, pointing outward toward their nearest wingtip, away from the fuselage; the fins stand vertically. Their sloping leading edges point forward. These are single-layer fins, with white backs.",
+      text: "Fold each lilac foot 90° from its fin. Place M3 on the left engine-roof guide and M4 on the right engine-roof guide, looking from the tail toward the nose. Glue the feet flat onto M5 and M6 respectively, pointing outward toward their nearest wingtip, away from the fuselage; the fins stand vertically. Their sloping leading edges point forward. The striped fins are single-layer, with white backs.",
     },
     {
       title: "Park on the carrier",
-      ids: ["M1", "M2", "M3", "M4"],
+      ids: ["M1", "M2", "M3", "M4", "M5", "M6", "M7"],
       text: "Let the first fighter dry and check its silhouette before making the other five. This miniature rests on its flat underside, with landing gear omitted. Place it loose on the 71 cm carrier first so you can adjust your deck arrangement. The wings remain spread in this first edition.",
     },
   ],
   hind: [
     {
       title: "Prepare one helicopter",
-      ids: ["H1", "H2", "H3", "H4", "H5", "H6", "H7"],
-      text: "Print page 2 at 100% on 160–200 gsm card. Check the 50 mm ruler. Cut only one seven-piece set first. Keep the long rotor blades supported on your cutting mat as you cut. The Mi-24 is a custom display addition, not part of Vikramaditya’s normal air group.",
+      ids: ["H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8", "H9"],
+      text: "Print page 2 at 100% on 160–200 gsm card. Check the 50 mm ruler. Cut only one nine-piece set first. Keep the long rotor blades supported on your cutting mat as you cut. The Mi-24 is a custom display addition, not part of Vikramaditya’s normal air group.",
     },
     {
       title: "Shape the tandem-cockpit body",
@@ -57,6 +67,11 @@ const guides = {
       text: "Keep H4 flat, printed side up. Centre it across the underside of the tail boom at the small lower-tail guide, 35 mm behind the nose. Glue its central 3 mm band to the bottom edges of the boom. The long span runs across the helicopter and the 4 mm chord runs nose to tail.",
     },
     {
+      title: "Fit the twin engine covers",
+      ids: ["H8", "H9"],
+      text: "Score the four edges of each cover’s central vented roof. Fold the two sides and two dark end panels down 90° to make an open-bottom cap. Glue H8 and H9 onto the fuselage roof side by side, starting 8 mm behind the nose. Leave 0.4 mm between them and a small gap before the rotor-mast guide. The intake ends face forward. The vent stripes are printed; do not cut them out.",
+    },
+    {
       title: "Build the rotor mast",
       ids: ["H6"],
       text: "Score the four hinges around H6’s central square. Fold all four sides down 90° to form a tiny open-bottom cap. Apply glue to its four lower edges and place it on the square roof guide on H1. Keep the 2 mm top square level and let it dry before adding the rotor.",
@@ -68,7 +83,7 @@ const guides = {
     },
     {
       title: "Check the finished silhouette",
-      ids: ["H1", "H2", "H3", "H4", "H5", "H6", "H7"],
+      ids: ["H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8", "H9"],
       text: "Check that the main rotor is level, both stub wings match, and the tail rotor clears the tailplane. Let everything dry before lifting by the body. This simplified model rests on its lower cabin edges; landing gear is omitted. Build the second copy once the first fits, then choose its place in your custom display.",
     },
   ],
@@ -162,23 +177,35 @@ function Aircraft({
     M2: 10,
     M3: 20,
     M4: 8,
+    M5: 15,
+    M6: 6,
+    M7: 25,
     H4: 0,
     H3: 5,
     H1: 10,
     H2: 20,
     H6: 30,
+    H8: 26,
+    H9: 25,
     H5: 40,
     H7: 50,
   };
   const faces = model.parts
     .filter((p) => !visible || visible.includes(p.id))
-    .flatMap((p, i) =>
+    .flatMap((p) =>
       p.mesh.map((f, j) => ({
         ...f,
         id: p.id,
         layer: order[p.id],
         index: j,
-        points: f.points.map(([x, y, z]) => [x, y, z + (exploded ? i * 3 : 0)]),
+        points: f.points.map(([x, y, z]) => [
+          x,
+          y,
+          z +
+            (exploded
+              ? model.parts.findIndex((part) => part.id === p.id) * 2
+              : 0),
+        ]),
       })),
     )
     .filter(
@@ -197,9 +224,9 @@ function Aircraft({
         <polygon
           key={i}
           points={f.points.map((p) => project(p).join(",")).join(" ")}
-          fill={highlight.includes(f.id) ? "#9ab6fb" : f.fill}
+          fill={highlight.includes(f.id) && !f.detail ? "#9ab6fb" : f.fill}
           stroke={highlight.includes(f.id) ? "#315eea" : "#7a8d9b"}
-          strokeWidth=".65"
+          strokeWidth={f.detail ? 0 : 0.65}
           strokeLinejoin="round"
         />
       ))}
@@ -248,7 +275,7 @@ export default function AircraftWorkbench() {
           <div className="air-pack-note">
             6 fighters + 2 helicopters
             <br />
-            <span>2 A4 sheets · 38 cut pieces</span>
+            <span>2 A4 sheets · 60 cut pieces</span>
           </div>
         </section>
         <div className="air-selector" aria-label="Choose an aircraft">
@@ -363,10 +390,10 @@ export default function AircraftWorkbench() {
               {mode === "guide"
                 ? current.text
                 : mode === "print"
-                  ? "The PDF includes six four-piece fighters and two seven-piece helicopters. Print only the page you need, or both to make the full display pack."
+                  ? "The PDF includes six seven-piece fighters and two nine-piece helicopters. Print only the page you need, or both to make the full display pack."
                   : selected === 0
-                    ? "A folded fuselage, swept wings and twin upright fins. Our first carrier fighter keeps its wings spread and uses a flat underside for easy placement."
-                    : "A folded tandem-cockpit body, separate stub wings and a five-blade rotor. Your choice of helicopter, included as a custom display addition—not a Vikramaditya air-group aircraft."}
+                    ? "Twin engine housings, a raised framed canopy and striped fins, with panel lines, nozzle bands and wing roundels. Seven cut pieces build a small fighter with more depth."
+                    : "A framed tandem cockpit, camouflage, cabin doors and windows, twin engine covers and marked rotor tips. Nine cut pieces build your custom display helicopter."}
             </p>
             {mode === "guide" ? (
               <div className="air-step-actions">
@@ -421,8 +448,8 @@ export default function AircraftWorkbench() {
               </>
             )}
             <p className="air-note">
-              160–200 gsm card · Print at 100%. These are simplified
-              first-edition miniatures; physical assembly has not yet been
+              160–200 gsm card · Print at 100%. These are detailed paper
+              miniatures; physical assembly has not yet been
               tested. Trial-build one before making the fleet.
             </p>
           </aside>
@@ -448,7 +475,8 @@ export default function AircraftWorkbench() {
                 : "Every piece, before you cut."}
             </h2>
             <span>
-              Enlarged patterns · solid = cut · dashed = fold · lilac = glue
+              Enlarged patterns · outer outline = cut · dashed = fold · fine
+              grey = detail
             </span>
           </div>
           <div className="air-parts-grid">

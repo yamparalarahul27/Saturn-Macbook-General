@@ -72,13 +72,15 @@ Overall dimensions use the [Ministry of Defence commissioning report](https://ww
 
 ## Aircraft collection
 
-Open `/aircraft` from the carrier page. The first 1:400 pack adds six MiG-29K fighters and two Mil Mi-24 helicopters on two A4 landscape sheets (38 cut pieces total). The Mi-24 is explicitly a custom display choice, not a Vikramaditya air-group aircraft.
+Open `/aircraft` from the carrier page. The first 1:400 pack adds six MiG-29K fighters and two Mil Mi-24 helicopters on two A4 landscape sheets (60 cut pieces total). The Mi-24 is explicitly a custom display choice, not a Vikramaditya air-group aircraft.
 
-- MiG-29K: 43.25 mm long, 29.975 mm wingspan; four pieces, five guide steps.
-- Mi-24: 43.75 mm fuselage, 43.25 mm swept rotor diameter; seven pieces, seven guide steps.
+- MiG-29K: 43.25 mm long, 29.975 mm wingspan; seven pieces, seven guide steps.
+- Mi-24: 43.75 mm fuselage, 43.25 mm swept rotor diameter; nine pieces, eight guide steps.
 - Includes assembled/exploded illustrations, numbered enlarged cutting patterns, page previews and a PDF download.
 - Print single-sided at 100% on 160–200 gsm card. Check the 50 mm calibration line. These open-bottom folded bodies omit landing gear; the fighter wings stay spread and helicopter rotors are fixed. Test-build one before making the whole pack.
 
 Regenerate with `python3 scripts/generate-aircraft.py` using ReportLab and pypdf. This writes `src/data/aircraft.json`, the public sheet SVGs and matching PDFs in `public/kits/aircraft` and `output/pdf`. The generator checks A4 page sizes, page margins, separated part bounds, fighter dimensions and the main rotor radius. The browser uses the generated mesh and pattern data; additional mounting lines are printed on the fighter sheet.
 
 These are original simplified craft patterns. Real-world dimensions anchor their overall size; local shapes, cross-sections, joints and heights are approximations, not blueprint reconstructions. Physical assembly and paper-thickness tolerances remain untested.
+
+The detail edition adds separate MiG engine housings and a raised framed canopy, and separate Mi-24 engine covers. Printed panel lines, roundels, fin stripes, cabin details, camouflage and rotor-tip bands use the same geometry in the PDF and on-screen preview. Paint schemes are illustrative, not a recreation of a specific airframe. New cap parts have no corner tabs: fold their four walls down and glue the lower edges to the marked mounting surfaces.
